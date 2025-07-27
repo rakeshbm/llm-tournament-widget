@@ -1,61 +1,77 @@
+import json
 from flask import Blueprint, request, jsonify
-from app.models import Tournament, Prompt, Vote
-from app import db
+from app.models import Tournament
+from app.services.tournaments import TournamentService
 
 bp = Blueprint("tournaments", __name__)
 
-@bp.route("/", methods=["POST"])
+@bp.route('', methods=['POST'])
 def create_tournament():
-    data = request.get_json()
+    data = request.json
+    question = data.get('question')
+    prompts = data.get('prompts', [])
+    
+    if not question or len(prompts) < 2:
+        return jsonify({'error': 'Need at least 2 prompts and a question'}), 400
+    
+    tournament = TournamentService.create_tournament(question, prompts)
 
-    if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
+    return jsonify({
+        'id': tournament.id,
+        'question': tournament.question,
+        'prompts': json.loads(tournament.prompts),
+        'responses': json.loads(tournament.responses),
+        'bracket': json.loads(tournament.bracket)
+    }), 201
 
-    name = data.get("name")
-    input_question = data.get("input_question")
-    prompts = data.get("prompts")
+@bp.route('/<int:tournament_id>', methods=['GET'])
+def get_tournament(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    return jsonify({
+        'id': tournament.id,
+        'question': tournament.question,
+        'prompts': json.loads(tournament.prompts),
+        'responses': json.loads(tournament.responses),
+        'bracket': json.loads(tournament.bracket),
+        'winner_prompt': tournament.winner_prompt,
+        'completed': tournament.completed
+    })
 
-    if not isinstance(name, str) or not name.strip():
-        return jsonify({"error": "Name must be a non-empty string"}), 400
-
-    if not isinstance(input_question, str) or not input_question.strip():
-        return jsonify({"error": "Input question must be a non-empty string"}), 400
-
-    if not isinstance(prompts, list) or not all(isinstance(p, str) and p.strip() for p in prompts):
-        return jsonify({"error": "Prompts must be a list of non-empty strings"}), 400
-
-    if len(prompts) < 2:
-        return jsonify({"error": "At least 2 prompts are required"}), 400
-
-    tournament = Tournament(name=name.strip(), input_question=input_question.strip())
-    db.session.add(tournament)
-    db.session.commit()
-
-    for prompt_text in prompts:
-        prompt = Prompt(text=prompt_text.strip(), tournament_id=tournament.id)
-        db.session.add(prompt)
-    db.session.commit()
-
-    return jsonify({"id": tournament.id}), 201
-
-@bp.route("/<int:tournament_id>/vote", methods=["POST"])
+@bp.route('/<int:tournament_id>/vote', methods=['POST'])
 def vote(tournament_id):
-    data = request.get_json()
+    tournament = Tournament.query.get_or_404(tournament_id)
+    data = request.json or {}
 
-    if not data:
-        return jsonify({"error": "Invalid JSON"}), 400
+    round_number = data.get('round')
+    match_number = data.get('match')
+    winner_index = data.get('winner')
 
-    prompt_id = data.get("prompt_id")
+    if round_number is None or match_number is None or winner_index is None:
+        return jsonify({"error": "Missing round, match or winner fields"}), 400
 
-    if not isinstance(prompt_id, int):
-        return jsonify({"error": "prompt_id must be an integer"}), 400
+    try:
+        bracket, completed, winner_prompt = TournamentService.vote(tournament, round_number, match_number, winner_index)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
-    prompt = Prompt.query.filter_by(id=prompt_id, tournament_id=tournament_id).first()
-    if not prompt:
-        return jsonify({"error": "Prompt not found in this tournament"}), 404
+    return jsonify({
+        'bracket': bracket,
+        'completed': completed,
+        'winner_prompt': winner_prompt
+    })
 
-    vote = Vote(prompt_id=prompt.id)
-    db.session.add(vote)
-    db.session.commit()
-
-    return jsonify({"message": "Vote recorded."}), 200
+@bp.route('', methods=['GET'])
+def get_tournaments():
+    tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all()
+    
+    result = []
+    for t in tournaments:
+        result.append({
+            'id': t.id,
+            'question': t.question[:100] + '...' if len(t.question) > 100 else t.question,
+            'num_prompts': len(json.loads(t.prompts)),
+            'completed': t.completed,
+            'created_at': t.created_at.isoformat()
+        })
+    
+    return jsonify(result)

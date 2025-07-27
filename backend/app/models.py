@@ -1,18 +1,20 @@
+from datetime import datetime
 from app import db
 
 class Tournament(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    input_question = db.Column(db.String(256), nullable=False)
-    prompts = db.relationship("Prompt", backref="tournament", lazy=True)
-
-class Prompt(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(512), nullable=False)
-    result = db.Column(db.Text)
-    tournament_id = db.Column(db.Integer, db.ForeignKey("tournament.id"), nullable=False)
-    votes = db.relationship("Vote", backref="prompt", lazy=True)
+    question = db.Column(db.Text, nullable=False)
+    prompts = db.Column(db.Text, nullable=False)
+    responses = db.Column(db.Text)
+    bracket = db.Column(db.Text)
+    winner_prompt = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed = db.Column(db.Boolean, default=False)
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    prompt_id = db.Column(db.Integer, db.ForeignKey("prompt.id"), nullable=False)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'), nullable=False)
+    round_number = db.Column(db.Integer, nullable=False)
+    match_number = db.Column(db.Integer, nullable=False)
+    winner_index = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
