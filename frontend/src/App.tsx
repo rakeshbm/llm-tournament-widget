@@ -14,13 +14,15 @@ export default function App() {
     loading,
     error,
     voteDialog,
-    createTournament,
-    loadTournament,
     vote,
     resetTournament,
     clearError,
+    createTournament,
+    loadTournament,
     getCurrentMatchData,
     getTournamentProgress,
+    closeVotingModal,
+    openVotingModal,
   } = useTournament();
 
   const currentMatchData = getCurrentMatchData();
@@ -28,12 +30,12 @@ export default function App() {
 
   const getLoadingMessage = (): string => {
     if (!tournament) return 'Creating your tournament...';
-    return 'Processing your vote...';
+    return 'Loading tournament...';
   };
 
   const getWinnerMessage = (): string => {
     if (!tournament?.winner_prompt) return '';
-    return `🏆 Winner: ${tournament.winner_prompt}`;
+    return `🏆 Winner prompt: ${tournament.winner_prompt}`;
   };
 
   return (
@@ -92,9 +94,16 @@ export default function App() {
                     )}
                   </Styled.TournamentInfo>
 
-                  <Styled.SecondaryButton onClick={resetTournament}>
-                    Start New Competition
-                  </Styled.SecondaryButton>
+                  <Styled.ButtonGroup>
+                    {!tournament.completed && (
+                      <Styled.PrimaryButton onClick={openVotingModal}>
+                        Continue Tournament
+                      </Styled.PrimaryButton>
+                    )}
+                    <Styled.SecondaryButton onClick={resetTournament}>
+                      Start New Tournament
+                    </Styled.SecondaryButton>
+                  </Styled.ButtonGroup>
                 </Styled.TournamentHeader>
               </Styled.TournamentCard>
 
@@ -112,7 +121,7 @@ export default function App() {
               tournament={tournament}
               currentMatch={currentMatchData}
               onVote={vote}
-              onClose={() => console.log('Voting modal dismissed')}
+              onClose={closeVotingModal}
             />
           )}
         </Styled.Container>

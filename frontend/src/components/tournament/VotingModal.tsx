@@ -21,11 +21,6 @@ export function VotingModal({
 }: VotingModalProps) {
   if (!currentMatch) return null;
 
-  const getPromptLabel = (index: number | null): string => {
-    if (index === null || index === -1) return 'N/A';
-    return `Variation ${index + 1}`;
-  };
-
   const participants = [currentMatch.participant1, currentMatch.participant2];
 
   return (
@@ -36,6 +31,9 @@ export function VotingModal({
           <Styled.ModalSubtitle>
             Question: "{tournament.question}"
           </Styled.ModalSubtitle>
+          <Styled.ModalClose onClick={onClose} aria-label="Close modal">
+            ×
+          </Styled.ModalClose>
         </Styled.ModalHeader>
 
         <Styled.ModalBody>
@@ -49,12 +47,6 @@ export function VotingModal({
                   key={idx}
                   onClick={() => onVote(participantIndex)}
                 >
-                  <Styled.ResponseHeader>
-                    {getPromptLabel(participantIndex)}
-                  </Styled.ResponseHeader>
-                  <Styled.ResponsePrompt>
-                    Instructions: {tournament.prompts[participantIndex]}
-                  </Styled.ResponsePrompt>
                   <Styled.ResponseText>
                     {tournament.responses[participantIndex]}
                   </Styled.ResponseText>

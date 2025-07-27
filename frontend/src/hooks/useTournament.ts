@@ -11,6 +11,14 @@ export const useTournament = () => {
   const [currentMatch, setCurrentMatch] = useState(0);
   const [voteDialog, setVoteDialog] = useState(false);
 
+  const closeVotingModal = async () => {
+    setVoteDialog(false);
+  };
+
+  const openVotingModal = async () => {
+    setVoteDialog(true);
+  };
+
   const fetchTournaments = async () => {
     try {
       const data = await tournamentApi.fetchTournaments();
@@ -75,7 +83,7 @@ export const useTournament = () => {
       if (!data.completed) {
         findNextMatch(data.bracket, 0, 0);
       } else {
-        setVoteDialog(false);
+        closeVotingModal();
       }
 
       return data;
@@ -111,13 +119,13 @@ export const useTournament = () => {
         ) {
           setCurrentRound(round);
           setCurrentMatch(match);
-          setVoteDialog(true);
+          openVotingModal();
           return;
         }
       }
     }
 
-    setVoteDialog(false);
+    closeVotingModal();
   };
 
   const vote = async (winnerIndex: number) => {
@@ -140,7 +148,7 @@ export const useTournament = () => {
         winner_prompt: data.winner_prompt,
       });
 
-      setVoteDialog(false);
+      closeVotingModal();
 
       if (data.completed) {
         await fetchTournaments();
@@ -162,7 +170,7 @@ export const useTournament = () => {
   const resetTournament = () => {
     setTournament(null);
     setError('');
-    setVoteDialog(false);
+    closeVotingModal();
     setCurrentRound(0);
     setCurrentMatch(0);
   };
@@ -218,5 +226,7 @@ export const useTournament = () => {
     clearError,
     getCurrentMatchData,
     getTournamentProgress,
+    closeVotingModal,
+    openVotingModal,
   };
 };

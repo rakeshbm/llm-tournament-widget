@@ -13,8 +13,8 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
     return `Round ${roundIndex + 1}`;
   };
 
-  const getPromptLabel = (index: number): string => {
-    return tournament.prompts?.[index] ?? `Prompt ${index + 1}`;
+  const getPromptResponse = (index: number): string => {
+    return tournament.responses?.[index] ?? 'N/A';
   };
 
   return (
@@ -37,7 +37,7 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
                       <Styled.MatchParticipant
                         isWinner={match.winner === match.participant1}
                       >
-                        {getPromptLabel(match.participant1)}
+                        {getPromptResponse(match.participant1)}
                       </Styled.MatchParticipant>
                     ) : (
                       <Styled.MatchParticipant isBye isWinner={false}>
@@ -50,7 +50,7 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
                       <Styled.MatchParticipant
                         isWinner={match.winner === match.participant2}
                       >
-                        {getPromptLabel(match.participant2)}
+                        {getPromptResponse(match.participant2)}
                       </Styled.MatchParticipant>
                     ) : (
                       <Styled.MatchParticipant isBye isWinner={false}>

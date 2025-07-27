@@ -195,6 +195,12 @@ export const ButtonRow = styled.div`
 `;
 
 // Buttons
+export const ButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
 export const PrimaryButton = styled.button`
   padding: 12px 24px;
   background: ${colors.primary};
@@ -611,6 +617,7 @@ export const ModalContent = styled.div`
 `;
 
 export const ModalHeader = styled.div`
+  position: relative;
   padding: 24px 32px;
   border-bottom: 1px solid ${colors.border};
   background: ${colors.background};
@@ -631,6 +638,21 @@ export const ModalSubtitle = styled.p`
   font-weight: 500;
 `;
 
+export const ModalClose = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+
+  &:hover {
+    color: #000;
+  }
+`;
+
 export const ModalBody = styled.div`
   padding: 32px;
 `;
@@ -648,7 +670,7 @@ export const ResponseGrid = styled.div`
 export const ResponseCard = styled.div`
   border: 2px solid ${colors.border};
   border-radius: 12px;
-  padding: 24px;
+  padding: 16px;
   background: ${colors.card};
   cursor: pointer;
   transition: all 0.2s ease;
@@ -658,24 +680,6 @@ export const ResponseCard = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
   }
-`;
-
-export const ResponseHeader = styled.h4`
-  margin: 0 0 12px 0;
-  color: ${colors.primary};
-  font-size: 18px;
-  font-weight: 600;
-`;
-
-export const ResponsePrompt = styled.div`
-  font-size: 14px;
-  color: ${colors.textSecondary};
-  background: ${colors.background};
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
-  border: 1px solid ${colors.border};
-  font-weight: 500;
 `;
 
 export const ResponseText = styled.div`
