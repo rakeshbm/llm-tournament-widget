@@ -1,4 +1,9 @@
-import { TournamentSummary, CreateTournamentRequest, Tournament, VoteRequest } from "../types";
+import {
+  TournamentSummary,
+  CreateTournamentRequest,
+  Tournament,
+  VoteRequest,
+} from '../types';
 
 const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000/api';
 
@@ -11,11 +16,13 @@ export const tournamentApi = {
     return response.json();
   },
 
-  createTournament: async (data: CreateTournamentRequest): Promise<Tournament> => {
+  createTournament: async (
+    data: CreateTournamentRequest
+  ): Promise<Tournament> => {
     const response = await fetch(`${API_BASE}/tournaments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -33,15 +40,18 @@ export const tournamentApi = {
   },
 
   vote: async (tournamentId: number, voteData: VoteRequest) => {
-    const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(voteData)
-    });
+    const response = await fetch(
+      `${API_BASE}/tournaments/${tournamentId}/vote`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(voteData),
+      }
+    );
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to record vote');
     }
     return response.json();
-  }
+  },
 };

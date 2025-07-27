@@ -1,28 +1,25 @@
 import styled, { keyframes } from 'styled-components';
 
-// Color palette
 const colors = {
-  primary: '#2563eb',         // Professional blue
-  primaryHover: '#1d4ed8',    
-  secondary: '#64748b',       // Slate gray
-  secondaryHover: '#475569',
-  success: '#10b981',         // Emerald
+  primary: '#2563eb',
+  primaryHover: '#1d4ed8',
+  secondary: '#64748b',
+  success: '#10b981',
   successLight: '#d1fae5',
-  warning: '#f59e0b',         // Amber
+  warning: '#f59e0b',
   warningLight: '#fef3c7',
-  danger: '#ef4444',          // Red
+  danger: '#ef4444',
   dangerHover: '#dc2626',
-  background: '#f8fafc',      // Very light blue-gray
+  background: '#f8fafc',
   card: '#ffffff',
-  border: '#e2e8f0',          // Light gray
-  borderFocus: '#3b82f6',     // Blue for focus states
-  textPrimary: '#0f172a',     // Dark slate
-  textSecondary: '#64748b',   // Medium slate
-  textMuted: '#94a3b8',       // Light slate
-  overlay: 'rgba(15, 23, 42, 0.6)', // Dark overlay
-};
+  border: '#e2e8f0',
+  borderFocus: '#3b82f6',
+  textPrimary: '#0f172a',
+  textSecondary: '#64748b',
+  textMuted: '#94a3b8',
+  overlay: 'rgba(15, 23, 42, 0.6)',
+} as const;
 
-// Animations
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -38,12 +35,13 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
-// Base styles
+// Layout
 export const AppContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(135deg, ${colors.background} 0%, #f1f5f9 100%);
   padding: 24px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 `;
 
 export const Container = styled.div`
@@ -51,7 +49,7 @@ export const Container = styled.div`
   margin: 0 auto;
 `;
 
-// Loading Overlay
+// Loading
 export const LoadingOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -71,7 +69,7 @@ export const LoadingContent = styled.div`
   padding: 32px;
   border-radius: 16px;
   text-align: center;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   animation: ${slideIn} 0.3s ease-out;
 `;
 
@@ -92,7 +90,7 @@ export const LoadingText = styled.p`
   font-weight: 500;
 `;
 
-// Header
+// Typography
 export const Header = styled.header`
   text-align: center;
   margin-bottom: 48px;
@@ -110,12 +108,20 @@ export const Title = styled.h1`
 export const Subtitle = styled.p`
   font-size: 18px;
   color: ${colors.textSecondary};
-  margin: 0;
-  font-weight: 400;
+  margin: 0 0 8px 0;
   line-height: 1.6;
 `;
 
-// Sections
+export const Description = styled.p`
+  font-size: 16px;
+  color: ${colors.textMuted};
+  margin: 0;
+  line-height: 1.5;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
 export const SectionTitle = styled.h2`
   font-size: 24px;
   font-weight: 600;
@@ -132,7 +138,7 @@ export const CreatorContainer = styled.div`
   padding: 32px;
   border-radius: 16px;
   border: 1px solid ${colors.border};
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   animation: ${fadeIn} 0.5s ease-out;
 `;
 
@@ -147,7 +153,6 @@ export const Label = styled.label`
   color: ${colors.textPrimary};
   font-size: 14px;
   letter-spacing: 0.025em;
-  text-transform: uppercase;
 `;
 
 export const TextArea = styled.textarea`
@@ -162,21 +167,17 @@ export const TextArea = styled.textarea`
   background: ${colors.card};
   color: ${colors.textPrimary};
   line-height: 1.5;
-  
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+
   &:focus {
     outline: none;
     border-color: ${colors.borderFocus};
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  
+
   &::placeholder {
     color: ${colors.textMuted};
-  }
-
-  &:disabled {
-    background: ${colors.background};
-    cursor: not-allowed;
-    opacity: 0.7;
   }
 `;
 
@@ -185,14 +186,6 @@ export const PromptRow = styled.div`
   gap: 8px;
   margin-bottom: 16px;
   align-items: flex-start;
-  background: ${colors.background};
-  border-radius: 12px;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: ${colors.primary};
-    transform: translateY(-1px);
-  }
 `;
 
 export const ButtonRow = styled.div`
@@ -215,13 +208,13 @@ export const PrimaryButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
   }
-  
+
   &:disabled {
     background: ${colors.textMuted};
     cursor: not-allowed;
@@ -230,31 +223,31 @@ export const PrimaryButton = styled.button`
   }
 `;
 
-export const SecondaryButton = styled.button`
+export const SecondaryButton = styled.button<{ disabled?: boolean }>`
   padding: 12px 24px;
   background: ${colors.card};
   color: ${colors.secondary};
   border: 2px solid ${colors.border};
   border-radius: 8px;
-  cursor: pointer;
   font-size: 16px;
   font-weight: 600;
   transition: all 0.2s ease;
-  
-  &:hover {
+
+  &:hover:not(:disabled) {
     background: ${colors.background};
     border-color: ${colors.secondary};
     transform: translateY(-1px);
+    cursor: pointer;
   }
 `;
 
-export const RemoveButton = styled.button`
-  margin-right: 12px;
-  background: ${props => props.disabled ? colors.background : colors.danger};
-  color: ${props => props.disabled ? colors.textMuted : 'white'};
+export const RemoveButton = styled.button<{ disabled: boolean }>`
+  background: ${(props) =>
+    props.disabled ? colors.background : colors.danger};
+  color: ${(props) => (props.disabled ? colors.textMuted : 'white')};
   border: none;
   border-radius: 6px;
-  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
   font-size: 18px;
   min-width: 36px;
   height: 36px;
@@ -263,7 +256,7 @@ export const RemoveButton = styled.button`
   justify-content: center;
   transition: all 0.2s ease;
   align-self: center;
-  
+
   &:hover:not(:disabled) {
     background: ${colors.dangerHover};
   }
@@ -272,18 +265,19 @@ export const RemoveButton = styled.button`
 export const HistoryButton = styled.button`
   width: 100%;
   padding: 16px 24px;
-  background: ${colors.primary};
-  color: white;
-  border: none;
+  background: ${colors.card};
+  color: ${colors.primary};
+  border: 2px solid ${colors.primary};
   border-radius: 12px;
   cursor: pointer;
   margin-top: 32px;
   font-size: 16px;
   font-weight: 600;
   transition: all 0.2s ease;
-  
+
   &:hover {
-    background: ${colors.primaryHover};
+    background: ${colors.primary};
+    color: white;
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
   }
@@ -291,15 +285,17 @@ export const HistoryButton = styled.button`
 
 export const SmallButton = styled.button<{ viewOnly?: boolean }>`
   padding: 8px 16px;
-  background: ${props => props.viewOnly ? colors.successLight : colors.warningLight};
-  color: ${props => props.viewOnly ? colors.success : colors.warning};
-  border: 1px solid ${props => props.viewOnly ? colors.success : colors.warning};
+  background: ${(props) =>
+    props.viewOnly ? colors.successLight : colors.warningLight};
+  color: ${(props) => (props.viewOnly ? colors.success : colors.warning)};
+  border: 1px solid
+    ${(props) => (props.viewOnly ? colors.success : colors.warning)};
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s ease;
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -322,14 +318,14 @@ export const CloseButton = styled.button`
   }
 `;
 
-// Cards
+// Tournament Cards
 export const TournamentCard = styled.div`
   background: ${colors.card};
   padding: 32px;
   border-radius: 16px;
   margin-bottom: 32px;
   border: 1px solid ${colors.border};
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   animation: ${fadeIn} 0.5s ease-out;
 `;
 
@@ -376,7 +372,7 @@ export const ProgressBar = styled.div`
 export const ProgressFill = styled.div<{ width: string }>`
   height: 100%;
   background: linear-gradient(90deg, ${colors.primary}, ${colors.success});
-  width: ${props => props.width};
+  width: ${(props) => props.width};
   transition: width 0.5s ease;
   border-radius: 4px;
 `;
@@ -414,8 +410,8 @@ export const ErrorAlert = styled.div`
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
-// Tournament Bracket Tree
-export const BracketContainer = styled.div`
+// Competition Tree
+export const CompetitionContainer = styled.div`
   overflow-x: auto;
   overflow-y: visible;
   padding: 8px 20px;
@@ -424,7 +420,7 @@ export const BracketContainer = styled.div`
   border: 1px solid ${colors.border};
 `;
 
-export const BracketTree = styled.div`
+export const CompetitionTree = styled.div`
   display: flex;
   align-items: center;
   gap: 80px;
@@ -432,7 +428,7 @@ export const BracketTree = styled.div`
   position: relative;
 `;
 
-export const BracketRound = styled.div`
+export const CompetitionRound = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -445,9 +441,10 @@ export const RoundLabel = styled.p`
   color: ${colors.textSecondary};
   text-align: center;
   white-space: nowrap;
+  margin-bottom: 16px;
 `;
 
-export const BracketMatch = styled.div<{ completed: boolean }>`
+export const CompetitionMatch = styled.div`
   position: relative;
   margin: 15px 0;
   z-index: 2;
@@ -463,129 +460,32 @@ export const MatchContainer = styled.div`
   z-index: 3;
 `;
 
-export const MatchParticipant = styled.div<{ isWinner: boolean; isBye?: boolean }>`
+export const MatchParticipant = styled.div<{
+  isWinner: boolean;
+  isBye?: boolean;
+}>`
   padding: 12px 16px;
   border-bottom: 1px solid ${colors.border};
-  background: ${props => {
+  background: ${(props) => {
     if (props.isBye) return colors.background;
     if (props.isWinner) return colors.successLight;
     return colors.card;
   }};
-  color: ${props => {
+  color: ${(props) => {
     if (props.isBye) return colors.textMuted;
     if (props.isWinner) return colors.success;
     return colors.textPrimary;
   }};
   font-size: 14px;
-  font-weight: ${props => props.isWinner ? 600 : 400};
-  border-left: ${props => props.isWinner ? `4px solid ${colors.success}` : '4px solid transparent'};
-  text-align: ${props => props.isBye ? 'center' : 'left'};
+  font-weight: ${(props) => (props.isWinner ? 600 : 400)};
+  border-left: ${(props) =>
+    props.isWinner ? `4px solid ${colors.success}` : '4px solid transparent'};
+  text-align: ${(props) => (props.isBye ? 'center' : 'left')};
   transition: all 0.2s ease;
 
   &:last-child {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
     border-bottom: none;
   }
-`;
-
-export const ConnectorLine = styled.div`
-  position: absolute;
-  top: 50%;
-  right: -40px;
-  width: 40px;
-  height: 2px;
-  background: ${colors.border};
-  transform: translateY(-1px);
-  z-index: 1;
-`;
-
-export const VerticalConnector = styled.div<{ height: number; top: number }>`
-  position: absolute;
-  right: -41px;
-  top: ${props => props.top}px;
-  width: 2px;
-  height: ${props => props.height}px;
-  background: ${colors.border};
-  z-index: 1;
-`;
-
-export const FinalMatch = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-export const TrophyIcon = styled.div`
-  font-size: 24px;
-  margin-bottom: 8px;
-  color: ${colors.warning};
-`;
-
-// Legacy styles for fallback
-export const RoundContainer = styled.div`
-  margin-bottom: 32px;
-  animation: ${fadeIn} 0.5s ease-out;
-`;
-
-export const RoundTitle = styled.h4`
-  margin-bottom: 20px;
-  padding: 12px 20px;
-  background: ${colors.background};
-  border: 1px solid ${colors.border};
-  border-radius: 8px;
-  color: ${colors.textPrimary};
-  font-weight: 600;
-  font-size: 16px;
-  letter-spacing: 0.025em;
-`;
-
-export const MatchGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-`;
-
-export const MatchCard = styled.div<{ completed: boolean }>`
-  border: 1px solid ${colors.border};
-  border-radius: 8px;
-  padding: 20px;
-  background: ${props => props.completed ? colors.background : colors.card};
-  transition: border-color 0.2s ease;
-`;
-
-export const MatchLabel = styled.div`
-  font-size: 14px;
-  color: ${colors.textSecondary};
-  margin-bottom: 12px;
-  font-weight: 600;
-`;
-
-export const ParticipantChip = styled.div<{ isWinner: boolean }>`
-  padding: 12px 16px;
-  margin: 4px 0;
-  background: ${props => props.isWinner ? colors.successLight : colors.card};
-  border: 2px solid ${props => props.isWinner ? colors.success : colors.border};
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  display: block;
-  transition: all 0.2s ease;
-  color: ${props => props.isWinner ? colors.success : colors.textPrimary};
-`;
-
-export const ByeChip = styled.div`
-  padding: 12px 16px;
-  margin: 4px 0;
-  background: ${colors.background};
-  border: 2px solid ${colors.border};
-  border-radius: 8px;
-  font-size: 14px;
-  color: ${colors.textMuted};
-  display: block;
-  font-weight: 500;
-  text-align: center;
 `;
 
 // History
@@ -626,27 +526,37 @@ export const HistoryChip = styled.span<{ variant?: 'success' | 'warning' }>`
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  background: ${props => {
+  background: ${(props) => {
     switch (props.variant) {
-      case 'success': return colors.successLight;
-      case 'warning': return colors.warningLight;
-      default: return colors.background;
+      case 'success':
+        return colors.successLight;
+      case 'warning':
+        return colors.warningLight;
+      default:
+        return colors.background;
     }
   }};
-  color: ${props => {
+  color: ${(props) => {
     switch (props.variant) {
-      case 'success': return colors.success;
-      case 'warning': return colors.warning;
-      default: return colors.textSecondary;
+      case 'success':
+        return colors.success;
+      case 'warning':
+        return colors.warning;
+      default:
+        return colors.textSecondary;
     }
   }};
-  border: 1px solid ${props => {
-    switch (props.variant) {
-      case 'success': return colors.success;
-      case 'warning': return colors.warning;
-      default: return colors.border;
-    }
-  }};
+  border: 1px solid
+    ${(props) => {
+      switch (props.variant) {
+        case 'success':
+          return colors.success;
+        case 'warning':
+          return colors.warning;
+        default:
+          return colors.border;
+      }
+    }};
 `;
 
 export const HistoryDate = styled.span`
@@ -729,7 +639,7 @@ export const ResponseGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -772,18 +682,6 @@ export const ResponseText = styled.div`
   font-size: 16px;
   line-height: 1.6;
   color: ${colors.textPrimary};
-  font-weight: 400;
-`;
-
-export const ModalFooter = styled.div`
-  padding: 20px 32px;
-  border-top: 1px solid ${colors.border};
-  text-align: center;
-  background: ${colors.background};
-  font-size: 14px;
-  color: ${colors.textSecondary};
-  border-radius: 0 0 16px 16px;
-  font-weight: 500;
 `;
 
 export const HistoryModalOverlay = styled.div`

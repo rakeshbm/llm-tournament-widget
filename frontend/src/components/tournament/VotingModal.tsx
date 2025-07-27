@@ -13,21 +13,36 @@ interface VotingModalProps {
   onClose: () => void;
 }
 
-export function VotingModal({ tournament, currentMatch, onVote, onClose }: VotingModalProps) {
+export function VotingModal({
+  tournament,
+  currentMatch,
+  onVote,
+  onClose,
+}: VotingModalProps) {
   if (!currentMatch) return null;
+
+  const getPromptLabel = (index: number | null): string => {
+    if (index === null || index === -1) return 'N/A';
+    return `Variation ${index + 1}`;
+  };
+
+  const participants = [currentMatch.participant1, currentMatch.participant2];
 
   return (
     <Styled.ModalOverlay onClick={onClose}>
       <Styled.ModalContent onClick={(e) => e.stopPropagation()}>
         <Styled.ModalHeader>
-          <Styled.ModalTitle>Click on the response you think is better</Styled.ModalTitle>
-          <Styled.ModalSubtitle>"{tournament.question}"</Styled.ModalSubtitle>
+          <Styled.ModalTitle>Which Response is Better?</Styled.ModalTitle>
+          <Styled.ModalSubtitle>
+            Question: "{tournament.question}"
+          </Styled.ModalSubtitle>
         </Styled.ModalHeader>
 
         <Styled.ModalBody>
           <Styled.ResponseGrid>
-            {[currentMatch.participant1, currentMatch.participant2].map((participantIndex, idx) => {
-              if (participantIndex === null || participantIndex === -1) return null;
+            {participants.map((participantIndex, idx) => {
+              if (participantIndex === null || participantIndex === -1)
+                return null;
 
               return (
                 <Styled.ResponseCard
@@ -35,10 +50,10 @@ export function VotingModal({ tournament, currentMatch, onVote, onClose }: Votin
                   onClick={() => onVote(participantIndex)}
                 >
                   <Styled.ResponseHeader>
-                    Prompt {participantIndex + 1}
+                    {getPromptLabel(participantIndex)}
                   </Styled.ResponseHeader>
                   <Styled.ResponsePrompt>
-                    {tournament.prompts[participantIndex]}
+                    Instructions: {tournament.prompts[participantIndex]}
                   </Styled.ResponsePrompt>
                   <Styled.ResponseText>
                     {tournament.responses[participantIndex]}

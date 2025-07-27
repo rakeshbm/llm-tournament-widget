@@ -1,4 +1,9 @@
-import { TournamentCreator, TournamentBracket, TournamentHistory, VotingModal } from './components/tournament';
+import {
+  TournamentCreator,
+  TournamentBracket,
+  TournamentHistory,
+  VotingModal,
+} from './components/tournament';
 import { useTournament } from './hooks';
 import * as Styled from './styles';
 
@@ -19,6 +24,17 @@ export default function App() {
   } = useTournament();
 
   const currentMatchData = getCurrentMatchData();
+  const progressPercentage = getTournamentProgress();
+
+  const getLoadingMessage = (): string => {
+    if (!tournament) return 'Creating your tournament...';
+    return 'Processing your vote...';
+  };
+
+  const getWinnerMessage = (): string => {
+    if (!tournament?.winner_prompt) return '';
+    return `🏆 Winner: ${tournament.winner_prompt}`;
+  };
 
   return (
     <>
@@ -27,8 +43,13 @@ export default function App() {
           <Styled.Header>
             <Styled.Title>LLM Prompt Tournament</Styled.Title>
             <Styled.Subtitle>
-              Compare prompts and find the best one through bracket-style elimination
+              Discover which prompts work best through head-to-head competition
             </Styled.Subtitle>
+            <Styled.Description>
+              Test multiple prompts against the same question and let voting
+              determine the winner. Perfect for finding the most effective
+              prompt variations.
+            </Styled.Description>
           </Styled.Header>
 
           {error && (
@@ -39,7 +60,7 @@ export default function App() {
           )}
 
           {!tournament && (
-            <TournamentCreator 
+            <TournamentCreator
               onCreateTournament={createTournament}
               loading={loading}
             />
@@ -50,24 +71,29 @@ export default function App() {
               <Styled.TournamentCard>
                 <Styled.TournamentHeader>
                   <Styled.TournamentInfo>
-                    <Styled.TournamentTitle>{tournament.question}</Styled.TournamentTitle>
+                    <Styled.TournamentTitle>
+                      {tournament.question}
+                    </Styled.TournamentTitle>
                     <Styled.TournamentMeta>
-                      {tournament.prompts.length} prompts competing
+                      Testing {tournament.prompts.length} different prompts
                     </Styled.TournamentMeta>
+
                     <Styled.ProgressBar>
-                      <Styled.ProgressFill width={`${getTournamentProgress()}%`} />
+                      <Styled.ProgressFill width={`${progressPercentage}%`} />
                     </Styled.ProgressBar>
                     <Styled.ProgressText>
-                      Progress: {getTournamentProgress()}% complete
+                      {progressPercentage}% complete
                     </Styled.ProgressText>
+
                     {tournament.completed && tournament.winner_prompt && (
                       <Styled.WinnerAlert>
-                        <strong>🏆 Winner:</strong> {tournament.winner_prompt}
+                        {getWinnerMessage()}
                       </Styled.WinnerAlert>
                     )}
                   </Styled.TournamentInfo>
+
                   <Styled.SecondaryButton onClick={resetTournament}>
-                    New Tournament
+                    Start New Competition
                   </Styled.SecondaryButton>
                 </Styled.TournamentHeader>
               </Styled.TournamentCard>
@@ -76,7 +102,7 @@ export default function App() {
             </>
           )}
 
-          <TournamentHistory 
+          <TournamentHistory
             tournaments={tournaments}
             onLoadTournament={loadTournament}
           />
@@ -86,20 +112,17 @@ export default function App() {
               tournament={tournament}
               currentMatch={currentMatchData}
               onVote={vote}
-              onClose={() => console.log('Modal close clicked')}
+              onClose={() => console.log('Voting modal dismissed')}
             />
           )}
         </Styled.Container>
       </Styled.AppContainer>
 
-      {/* Loading Overlay */}
       {loading && (
         <Styled.LoadingOverlay>
           <Styled.LoadingContent>
             <Styled.LoadingSpinner />
-            <Styled.LoadingText>
-              {!tournament ? 'Creating tournament...' : 'Processing...'}
-            </Styled.LoadingText>
+            <Styled.LoadingText>{getLoadingMessage()}</Styled.LoadingText>
           </Styled.LoadingContent>
         </Styled.LoadingOverlay>
       )}

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { tournamentApi } from "../services";
-import { Match, Tournament, TournamentSummary } from "../types";
+import { useState, useEffect } from 'react';
+import { tournamentApi } from '../services';
+import { Match, Tournament, TournamentSummary } from '../types';
 
 export const useTournament = () => {
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -32,7 +32,7 @@ export const useTournament = () => {
       return null;
     }
 
-    if (prompts.some(p => !p.trim())) {
+    if (prompts.some((p) => !p.trim())) {
       setError('Please fill in all prompts');
       return null;
     }
@@ -43,19 +43,20 @@ export const useTournament = () => {
     try {
       const data = await tournamentApi.createTournament({
         question: question.trim(),
-        prompts: prompts.filter(p => p.trim())
+        prompts: prompts.filter((p) => p.trim()),
       });
 
       setTournament(data);
       setCurrentRound(0);
       setCurrentMatch(0);
-      
+
       findNextMatch(data.bracket, 0, 0);
       await fetchTournaments();
-      
+
       return data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
       return null;
     } finally {
@@ -70,7 +71,7 @@ export const useTournament = () => {
 
       const data = await tournamentApi.loadTournament(id);
       setTournament(data);
-      
+
       if (!data.completed) {
         findNextMatch(data.bracket, 0, 0);
       } else {
@@ -79,7 +80,8 @@ export const useTournament = () => {
 
       return data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load tournament';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to load tournament';
       setError(errorMessage);
       return null;
     } finally {
@@ -87,16 +89,26 @@ export const useTournament = () => {
     }
   };
 
-  const findNextMatch = (bracket: Match[][], startRound: number, startMatch: number) => {
+  const findNextMatch = (
+    bracket: Match[][],
+    startRound: number,
+    startMatch: number
+  ) => {
     for (let round = startRound; round < bracket.length; round++) {
-      for (let match = (round === startRound ? startMatch : 0); match < bracket[round].length; match++) {
+      for (
+        let match = round === startRound ? startMatch : 0;
+        match < bracket[round].length;
+        match++
+      ) {
         const currentMatchData = bracket[round][match];
-        
-        if (currentMatchData.winner === null && 
-            currentMatchData.participant1 !== null && 
-            currentMatchData.participant2 !== null &&
-            currentMatchData.participant1 !== -1 && 
-            currentMatchData.participant2 !== -1) {
+
+        if (
+          currentMatchData.winner === null &&
+          currentMatchData.participant1 !== null &&
+          currentMatchData.participant2 !== null &&
+          currentMatchData.participant1 !== -1 &&
+          currentMatchData.participant2 !== -1
+        ) {
           setCurrentRound(round);
           setCurrentMatch(match);
           setVoteDialog(true);
@@ -104,7 +116,7 @@ export const useTournament = () => {
         }
       }
     }
-    
+
     setVoteDialog(false);
   };
 
@@ -118,14 +130,14 @@ export const useTournament = () => {
       const data = await tournamentApi.vote(tournament.id, {
         round: currentRound,
         match: currentMatch,
-        winner: winnerIndex
+        winner: winnerIndex,
       });
-      
+
       setTournament({
         ...tournament,
         bracket: data.bracket,
         completed: data.completed,
-        winner_prompt: data.winner_prompt
+        winner_prompt: data.winner_prompt,
       });
 
       setVoteDialog(false);
@@ -140,7 +152,8 @@ export const useTournament = () => {
 
       return data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to record vote';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to record vote';
       setError(errorMessage);
       return null;
     }
@@ -167,8 +180,8 @@ export const useTournament = () => {
     let totalMatches = 0;
     let completedMatches = 0;
 
-    tournament.bracket.forEach(round => {
-      round.forEach(match => {
+    tournament.bracket.forEach((round) => {
+      round.forEach((match) => {
         totalMatches++;
         if (match.winner !== null) {
           completedMatches++;
@@ -176,7 +189,9 @@ export const useTournament = () => {
       });
     });
 
-    return totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
+    return totalMatches > 0
+      ? Math.round((completedMatches / totalMatches) * 100)
+      : 0;
   };
 
   const clearError = () => {
