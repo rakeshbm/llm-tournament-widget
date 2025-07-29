@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { tournamentApi } from '../services';
 import { Match, Tournament, TournamentSummary } from '../types';
 
@@ -10,6 +10,8 @@ export const useTournament = () => {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentMatch, setCurrentMatch] = useState(0);
   const [voteDialog, setVoteDialog] = useState(false);
+  
+  const votingRef = useRef(false);
 
   const closeVotingModal = async () => {
     setVoteDialog(false);
@@ -134,6 +136,12 @@ export const useTournament = () => {
       return null;
     }
 
+    if (votingRef.current) {
+      return null;
+    }
+
+    votingRef.current = true;
+
     try {
       const data = await tournamentApi.vote(tournament.id, {
         round: currentRound,
@@ -153,9 +161,7 @@ export const useTournament = () => {
       if (data.completed) {
         await fetchTournaments();
       } else {
-        setTimeout(() => {
-          findNextMatch(data.bracket, currentRound, currentMatch + 1);
-        }, 500);
+        findNextMatch(data.bracket, currentRound, currentMatch + 1);
       }
 
       return data;
@@ -164,6 +170,8 @@ export const useTournament = () => {
         err instanceof Error ? err.message : 'Failed to record vote';
       setError(errorMessage);
       return null;
+    } finally {
+      votingRef.current = false;
     }
   };
 
@@ -173,10 +181,11 @@ export const useTournament = () => {
     closeVotingModal();
     setCurrentRound(0);
     setCurrentMatch(0);
+    votingRef.current = false;
   };
 
   const getCurrentMatchData = () => {
-    if (!tournament || !tournament.bracket[currentRound]) {
+    if (!tournament?.bracket?.[currentRound]?.[currentMatch]) {
       return null;
     }
     return tournament.bracket[currentRound][currentMatch];

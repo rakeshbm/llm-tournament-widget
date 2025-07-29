@@ -20,7 +20,6 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
   return (
     <div>
       <Styled.SectionTitle>Tournament Progress</Styled.SectionTitle>
-
       <Styled.CompetitionContainer>
         <Styled.CompetitionTree>
           {tournament.bracket.map((round, roundIndex) => (
@@ -28,7 +27,6 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
               <Styled.RoundLabel>
                 {getRoundName(roundIndex, tournament.bracket.length)}
               </Styled.RoundLabel>
-
               {round.map((match, matchIndex) => (
                 <Styled.CompetitionMatch key={matchIndex}>
                   <Styled.MatchContainer>
@@ -44,7 +42,6 @@ export function TournamentBracket({ tournament }: TournamentBracketProps) {
                         Bye
                       </Styled.MatchParticipant>
                     )}
-
                     {match.participant2 !== null &&
                     match.participant2 !== -1 ? (
                       <Styled.MatchParticipant

@@ -35,7 +35,6 @@ export function VotingModal({
             ×
           </Styled.ModalClose>
         </Styled.ModalHeader>
-
         <Styled.ModalBody>
           <Styled.ResponseGrid>
             {participants.map((participantIndex, idx) => {
