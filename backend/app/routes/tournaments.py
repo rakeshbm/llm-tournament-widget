@@ -13,8 +13,13 @@ def create_tournament():
     
     if not question or len(prompts) < 2:
         return jsonify({'error': 'Need at least 2 prompts and a question'}), 400
-    
-    tournament = TournamentService.create_tournament(question, prompts)
+
+    try:
+        tournament = TournamentService.create_tournament(question, prompts)
+    except RuntimeError as e:
+        return jsonify({'error': str(e)}), 502
+    except Exception as e:
+        return jsonify({'error': 'Unexpected error occurred.'}), 500
 
     return jsonify({
         'id': tournament.id,

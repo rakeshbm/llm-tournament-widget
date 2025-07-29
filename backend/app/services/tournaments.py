@@ -7,6 +7,8 @@ class TournamentService:
     @staticmethod
     def create_tournament(question, prompts):
         responses = [generate_llm_response(prompt, question) for prompt in prompts]
+        if any(response is None or response.strip() == "" for response in responses):
+            raise RuntimeError("Failed to generate one or more LLM responses. Tournament not created.")
         bracket = create_bracket(prompts)
 
         tournament = Tournament(

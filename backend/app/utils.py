@@ -30,7 +30,8 @@ def generate_llm_response(prompt, question):
         return response.json()["choices"][0]["message"]["content"].strip()
 
     except Exception as e:
-        return f"Error generating response: {str(e)}"
+        print(f"Error generating response: {str(e)}")
+        return None
 
 def create_bracket(prompts):
     num_prompts = len(prompts)

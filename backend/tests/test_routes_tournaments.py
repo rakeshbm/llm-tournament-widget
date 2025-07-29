@@ -157,3 +157,29 @@ def test_get_tournaments_success(mock_query, client):
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 2
+
+@patch('app.routes.tournaments.TournamentService.create_tournament')
+def test_create_tournament_runtime_error(mock_create_tournament, client):
+    mock_create_tournament.side_effect = RuntimeError("Failed to generate one or more LLM responses.")
+
+    payload = {
+        "question": "What is the best way to start a project?",
+        "prompts": ["prompt1", "prompt2"]
+    }
+
+    response = client.post('/api/tournaments', json=payload)
+    assert response.status_code == 502
+    assert response.get_json() == {"error": "Failed to generate one or more LLM responses."}
+
+@patch('app.routes.tournaments.TournamentService.create_tournament')
+def test_create_tournament_unexpected_error(mock_create_tournament, client):
+    mock_create_tournament.side_effect = Exception("Some unexpected issue")
+
+    payload = {
+        "question": "What is the best way to start a project?",
+        "prompts": ["prompt1", "prompt2"]
+    }
+
+    response = client.post('/api/tournaments', json=payload)
+    assert response.status_code == 500
+    assert response.get_json() == {"error": "Unexpected error occurred."}

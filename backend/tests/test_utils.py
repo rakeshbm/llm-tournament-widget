@@ -32,7 +32,7 @@ def test_generate_llm_response_failure(mock_post):
     mock_post.side_effect = Exception("API error")
 
     response = utils.generate_llm_response("prompt", "question")
-    assert response.startswith("Error generating response:")
+    assert response == None
 
 def test_create_bracket_basic():
     prompts = ["Prompt 1", "Prompt 2", "Prompt 3"]

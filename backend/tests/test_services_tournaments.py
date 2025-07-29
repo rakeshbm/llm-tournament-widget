@@ -132,3 +132,10 @@ def test_vote_invalid_winner_index_raises(mock_db_session):
     )
     with pytest.raises(ValueError, match="Winner index must be one of the participants"):
         TournamentService.vote(tournament, 0, 0, 2)
+
+@patch("app.services.tournaments.generate_llm_response")
+def test_create_tournament_raises_if_llm_fails(mock_generate_llm_response, mock_db_session, sample_prompts, sample_question):
+    mock_generate_llm_response.return_value = None
+
+    with pytest.raises(RuntimeError, match="Failed to generate one or more LLM responses."):
+        TournamentService.create_tournament(sample_question, sample_prompts)
