@@ -11,9 +11,9 @@ def app():
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.secret_key = 'test-secret-key'
 
     db.init_app(app)
-
     app.register_blueprint(tournaments_bp, url_prefix='/api/tournaments')
 
     with app.app_context():
@@ -26,160 +26,289 @@ def app():
 def client(app):
     return app.test_client()
 
-@patch('app.routes.tournaments.TournamentService.create_tournament')
-def test_create_tournament_success(mock_create_tournament, client):
-    mock_tournament = MagicMock()
-    mock_tournament.id = 1
-    mock_tournament.question = "Sample question?"
-    mock_tournament.prompts = json.dumps(["p1", "p2"])
-    mock_tournament.responses = json.dumps(["r1", "r2"])
-    mock_tournament.bracket = json.dumps([{"some": "bracket"}])
-    mock_create_tournament.return_value = mock_tournament
+def test_create_tournament_success(client):
+    with patch('app.routes.tournaments.TournamentService.create_tournament') as mock_create:
+        mock_tournament = MagicMock()
+        mock_tournament.id = 1
+        mock_tournament.question = "What's better?"
+        mock_tournament.prompts = json.dumps(["Option A", "Option B", "Option C"])
+        mock_tournament.responses = json.dumps(["Response A", "Response B", "Response C"])
+        mock_tournament.bracket_template = json.dumps([
+            [{"participant1": 0, "participant2": 1, "winner": None}],
+            [{"participant1": None, "participant2": None, "winner": None}]
+        ])
+        mock_create.return_value = mock_tournament
 
-    payload = {
-        "question": "Sample question?",
-        "prompts": ["p1", "p2"]
-    }
+        payload = {
+            "question": "What's better?",
+            "prompts": ["Option A", "Option B", "Option C"]
+        }
+        
+        response = client.post('/api/tournaments', json=payload)
+        
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['id'] == 1
+        assert data['question'] == "What's better?"
+        assert len(data['prompts']) == 3
+
+def test_create_tournament_missing_question(client):
+    payload = {"prompts": ["Option A", "Option B"]}
+    
     response = client.post('/api/tournaments', json=payload)
-    assert response.status_code == 201
-
-    data = response.get_json()
-    assert data['id'] == 1
-    assert data['question'] == "Sample question?"
-    assert data['prompts'] == ["p1", "p2"]
-    assert data['responses'] == ["r1", "r2"]
-    assert data['bracket'] == [{"some": "bracket"}]
-
-def test_create_tournament_bad_request(client):
-    response = client.post('/api/tournaments', json={"question": "Q", "prompts": ["only one"]})
+    
     assert response.status_code == 400
     assert "error" in response.get_json()
 
-@patch('app.routes.tournaments.Tournament.query')
-def test_get_tournament_success(mock_query, client):
-    mock_tournament = MagicMock()
-    mock_tournament.id = 1
-    mock_tournament.question = "Sample question?"
-    mock_tournament.prompts = json.dumps(["p1", "p2"])
-    mock_tournament.responses = json.dumps(["r1", "r2"])
-    mock_tournament.bracket = json.dumps([{"rounds": "something"}])
-    mock_tournament.winner_prompt = "p1"
-    mock_tournament.completed = False
-
-    mock_query.get_or_404.return_value = mock_tournament
-
-    response = client.get('/api/tournaments/1')
-    assert response.status_code == 200
-
-    data = response.get_json()
-    assert data['id'] == 1
-    assert data['winner_prompt'] == "p1"
-    assert data['completed'] is False
-
-@patch('app.routes.tournaments.Tournament.query')
-@patch('app.routes.tournaments.TournamentService.vote')
-def test_vote_success(mock_vote, mock_query, client):
-    mock_tournament = MagicMock()
-    mock_tournament.id = 1
-    mock_tournament.prompts = json.dumps(["p1", "p2"])
-    mock_tournament.completed = False
-    mock_tournament.winner_prompt = None
-    mock_tournament.bracket = json.dumps([{}])
-
-    mock_query.get_or_404.return_value = mock_tournament
-
-    mock_vote.return_value = (
-        [{"participant1": 0, "participant2": 1, "winner": 0}],  # bracket
-        False,  # completed
-        None  # winner_prompt
-    )
-
+def test_create_tournament_not_enough_prompts(client):
     payload = {
-        "round": 0,
-        "match": 0,
-        "winner": 0
+        "question": "What's better?",
+        "prompts": ["Only one option"]
     }
-    response = client.post('/api/tournaments/1/vote', json=payload)
-    assert response.status_code == 200
-
-    data = response.get_json()
-    assert "bracket" in data
-    assert data['completed'] is False
-    assert data['winner_prompt'] is None
-
-def test_vote_bad_request_missing_fields(client):
-    response = client.post('/api/tournaments/1/vote', json={})
-    assert response.status_code == 404
-
-@patch('app.routes.tournaments.Tournament.query')
-@patch('app.routes.tournaments.TournamentService.vote')
-def test_vote_service_raises_error(mock_vote, mock_query, client):
-    mock_tournament = MagicMock()
-    mock_tournament.id = 1
-    mock_tournament.prompts = json.dumps(["p1", "p2"])
-    mock_tournament.completed = False
-    mock_tournament.winner_prompt = None
-    mock_tournament.bracket = json.dumps([{}])
-
-    mock_query.get_or_404.return_value = mock_tournament
-
-    mock_vote.side_effect = ValueError("Invalid match number")
-
-    payload = {
-        "round": 0,
-        "match": 5,
-        "winner": 0
-    }
-    response = client.post('/api/tournaments/1/vote', json=payload)
+    
+    response = client.post('/api/tournaments', json=payload)
+    
     assert response.status_code == 400
-    assert "Invalid match number" in response.get_json().get("error", "")
+    assert "Need at least 2 prompts" in response.get_json()['error']
 
-@patch('app.routes.tournaments.Tournament.query')
-def test_get_tournaments_success(mock_query, client):
-    mock_t1 = MagicMock()
-    mock_t1.id = 1
-    mock_t1.question = "Q1"
-    mock_t1.prompts = json.dumps(["p1", "p2"])
-    mock_t1.completed = False
-    from datetime import datetime
-    mock_t1.created_at = datetime.utcnow()
+def test_create_tournament_llm_failure(client):
+    with patch('app.routes.tournaments.TournamentService.create_tournament') as mock_create:
+        mock_create.side_effect = RuntimeError("Failed to generate responses")
+        
+        payload = {
+            "question": "What's better?",
+            "prompts": ["Option A", "Option B"]
+        }
+        
+        response = client.post('/api/tournaments', json=payload)
+        
+        assert response.status_code == 502
+        assert "Failed to generate responses" in response.get_json()['error']
 
-    mock_t2 = MagicMock()
-    mock_t2.id = 2
-    mock_t2.question = "Q2 with a very long question text that should be truncated when returned in the list view." * 5
-    mock_t2.prompts = json.dumps(["p1", "p2", "p3"])
-    mock_t2.completed = True
-    mock_t2.created_at = datetime.utcnow()
+def test_get_tournament_new_user(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        mock_tournament = MagicMock()
+        mock_tournament.id = 1
+        mock_tournament.question = "Test question?"
+        mock_tournament.prompts = json.dumps(["A", "B"])
+        mock_tournament.responses = json.dumps(["Response A", "Response B"])  
+        mock_tournament.bracket_template = json.dumps([
+            [{"participant1": 0, "participant2": 1, "winner": None}]
+        ])
+        
+        mock_get.return_value = (mock_tournament, None, [
+            [{"participant1": 0, "participant2": 1, "winner": None}]
+        ])
+        
+        response = client.get('/api/tournaments/1')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['id'] == 1
+        assert data['user_state']['current_round'] == 0
+        assert data['user_state']['completed'] is False
 
-    mock_query.order_by.return_value.all.return_value = [mock_t1, mock_t2]
+def test_get_tournament_existing_user(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        mock_tournament = MagicMock()
+        mock_tournament.id = 1
+        mock_tournament.question = "Test question?"
+        mock_tournament.prompts = json.dumps(["A", "B"])
+        mock_tournament.responses = json.dumps(["Response A", "Response B"])
+        mock_tournament.bracket_template = json.dumps([
+            [{"participant1": 0, "participant2": 1, "winner": None}]
+        ])
+        
+        mock_user_tournament = MagicMock()
+        mock_user_tournament.current_round = 0
+        mock_user_tournament.current_match = 0
+        mock_user_tournament.completed = True
+        mock_user_tournament.winner_prompt_index = 1
+        
+        mock_get.return_value = (mock_tournament, mock_user_tournament, [
+            [{"participant1": 0, "participant2": 1, "winner": 1}]
+        ])
+        
+        response = client.get('/api/tournaments/1')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['user_state']['completed'] is True
+        assert data['user_state']['winner_prompt_index'] == 1
 
-    response = client.get('/api/tournaments')
-    assert response.status_code == 200
-    data = response.get_json()
-    assert len(data) == 2
+def test_get_tournament_status_new_user(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        mock_get.return_value = (MagicMock(), None, [])
+        
+        response = client.get('/api/tournaments/1/status')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['participated'] is False
+        assert data['completed'] is False
+        assert data['started_at'] is None
 
-@patch('app.routes.tournaments.TournamentService.create_tournament')
-def test_create_tournament_runtime_error(mock_create_tournament, client):
-    mock_create_tournament.side_effect = RuntimeError("Failed to generate one or more LLM responses.")
+def test_vote_success(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        with patch('app.routes.tournaments.TournamentService.record_vote') as mock_vote:
+            mock_tournament = MagicMock()
+            mock_get.return_value = (mock_tournament, None, [])
+            
+            mock_vote.return_value = (
+                [{"participant1": 0, "participant2": 1, "winner": 0}],
+                False,
+                None
+            )
+            
+            payload = {
+                "round": 0,
+                "match": 0, 
+                "winner": 0
+            }
+            
+            response = client.post('/api/tournaments/1/vote', json=payload)
+            
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data['completed'] is False
+            assert 'user_bracket' in data
 
-    payload = {
-        "question": "What is the best way to start a project?",
-        "prompts": ["prompt1", "prompt2"]
-    }
+def test_vote_missing_fields(client):
+    payload = {"round": 0}  # Missing match and winner
+    
+    response = client.post('/api/tournaments/1/vote', json=payload)
+    
+    assert response.status_code == 400
+    assert "Missing round, match or winner fields" in response.get_json()['error']
 
-    response = client.post('/api/tournaments', json=payload)
-    assert response.status_code == 502
-    assert response.get_json() == {"error": "Failed to generate one or more LLM responses."}
+def test_vote_invalid_match(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        with patch('app.routes.tournaments.TournamentService.record_vote') as mock_vote:
+            mock_tournament = MagicMock()
+            mock_get.return_value = (mock_tournament, None, [])
+            
+            mock_vote.side_effect = ValueError("Invalid match number")
+            
+            payload = {
+                "round": 0,
+                "match": 99,
+                "winner": 0
+            }
+            
+            response = client.post('/api/tournaments/1/vote', json=payload)
+            
+            assert response.status_code == 400
+            assert "Invalid match number" in response.get_json()['error']
 
-@patch('app.routes.tournaments.TournamentService.create_tournament')
-def test_create_tournament_unexpected_error(mock_create_tournament, client):
-    mock_create_tournament.side_effect = Exception("Some unexpected issue")
+def test_get_tournament_results(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_results') as mock_results:
+        with patch('app.routes.tournaments.TournamentService.get_tournament_stats') as mock_stats:
+            mock_results.return_value = [
+                {
+                    'prompt': 'Best option',
+                    'prompt_index': 0,
+                    'win_count': 5,
+                    'total_participants': 10,
+                    'win_percentage': 50.0
+                }
+            ]
+            
+            mock_stats.return_value = {
+                'total_participants': 10,
+                'completed_participants': 8,
+                'completion_rate': 80.0
+            }
+            
+            response = client.get('/api/tournaments/1/results')
+            
+            assert response.status_code == 200
+            data = response.get_json()
+            assert 'results' in data
+            assert 'stats' in data
+            assert len(data['results']) == 1
+            assert data['stats']['completion_rate'] == 80.0
 
-    payload = {
-        "question": "What is the best way to start a project?",
-        "prompts": ["prompt1", "prompt2"]
-    }
+def test_get_tournament_participants(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournament_participants') as mock_participants:
+        mock_participants.return_value = [
+            {
+                'user_id': 'abc123...',
+                'completed': True,
+                'current_round': 1,
+                'current_match': 0,
+                'started_at': '2024-01-01T00:00:00',
+                'completed_at': '2024-01-01T00:05:00'
+            },
+            {
+                'user_id': 'def456...',
+                'completed': False,
+                'current_round': 0,
+                'current_match': 1,
+                'started_at': '2024-01-01T00:02:00',
+                'completed_at': None
+            }
+        ]
+        
+        response = client.get('/api/tournaments/1/participants')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'participants' in data
+        assert 'total_count' in data
+        assert data['total_count'] == 2
+        assert len(data['participants']) == 2
 
-    response = client.post('/api/tournaments', json=payload)
-    assert response.status_code == 500
-    assert response.get_json() == {"error": "Unexpected error occurred."}
+def test_get_tournaments_list(client):
+    with patch('app.routes.tournaments.TournamentService.get_tournaments_list') as mock_list:
+        mock_list.return_value = [
+            {
+                'id': 1,
+                'question': 'Short question?',
+                'num_prompts': 4,
+                'created_at': '2024-01-01T00:00:00',
+                'total_participants': 15,
+                'completed_participants': 12,
+                'completion_rate': 80.0
+            },
+            {
+                'id': 2,
+                'question': 'Very long question that gets truncated...',
+                'num_prompts': 3,
+                'created_at': '2024-01-02T00:00:00', 
+                'total_participants': 5,
+                'completed_participants': 3,
+                'completion_rate': 60.0
+            }
+        ]
+        
+        response = client.get('/api/tournaments')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data) == 2
+        assert data[0]['id'] == 1
+        assert data[1]['completion_rate'] == 60.0
+
+def test_session_user_id_generation(client):
+    # Test that user ID is generated and persisted in session
+    with client.session_transaction() as sess:
+        assert 'user_id' not in sess
+    
+    # Make a request that triggers get_user_id()
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        mock_get.return_value = (MagicMock(), None, [])
+        client.get('/api/tournaments/1/status')
+    
+    with client.session_transaction() as sess:
+        assert 'user_id' in sess
+        assert len(sess['user_id']) > 0
+
+def test_error_handling_in_routes(client):
+    # Test generic error handling
+    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
+        mock_get.side_effect = Exception("Database connection failed")
+        
+        response = client.get('/api/tournaments/1')
+        
+        assert response.status_code == 500
+        assert "Database connection failed" in response.get_json()['error']

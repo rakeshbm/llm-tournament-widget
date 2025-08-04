@@ -7,7 +7,13 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
-    CORS(app)
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:3000"],
+        allow_headers=["Content-Type", "Authorization"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
     db.init_app(app)
 
     from app.routes.tournaments import bp as tournaments_bp
