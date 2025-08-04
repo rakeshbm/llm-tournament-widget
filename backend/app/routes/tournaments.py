@@ -1,13 +1,20 @@
 import json
-from flask import Blueprint, request, jsonify
-from app.models import Tournament
+from flask import Blueprint, request, jsonify, session
 from app.services.tournaments import TournamentService
+import uuid
 
 bp = Blueprint("tournaments", __name__)
 
+def get_user_id():
+    """Get user ID from session (for now) or Auth0 later"""
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())  # Generate unique session-based user ID
+    return session['user_id']
+
 @bp.route('', methods=['POST'])
 def create_tournament():
-    data = request.json
+    """Create a new tournament"""
+    data = request.json or {}
     question = data.get('question')
     prompts = data.get('prompts', [])
     
@@ -16,67 +23,159 @@ def create_tournament():
 
     try:
         tournament = TournamentService.create_tournament(question, prompts)
+        
+        prompts_data = [p.text for p in tournament.prompts]
+        responses_data = [p.response for p in tournament.prompts]
+        
+        return jsonify({
+            'id': tournament.id,
+            'question': tournament.question,
+            'prompts': prompts_data,
+            'responses': responses_data,
+            'bracket_template': tournament.bracket_template
+        }), 201
     except RuntimeError as e:
         return jsonify({'error': str(e)}), 502
     except Exception as e:
         return jsonify({'error': 'Unexpected error occurred.'}), 500
 
-    return jsonify({
-        'id': tournament.id,
-        'question': tournament.question,
-        'prompts': json.loads(tournament.prompts),
-        'responses': json.loads(tournament.responses),
-        'bracket': json.loads(tournament.bracket)
-    }), 201
-
 @bp.route('/<int:tournament_id>', methods=['GET'])
 def get_tournament(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
-    return jsonify({
-        'id': tournament.id,
-        'question': tournament.question,
-        'prompts': json.loads(tournament.prompts),
-        'responses': json.loads(tournament.responses),
-        'bracket': json.loads(tournament.bracket),
-        'winner_prompt': tournament.winner_prompt,
-        'completed': tournament.completed
-    })
+    """Get tournament details and user-specific state"""
+    try:
+        user_id = get_user_id()
+        tournament, user_tournament, user_bracket = TournamentService.get_tournament_with_user_state(
+            tournament_id, user_id
+        )
+        
+        # Format user state
+        if not user_tournament:
+            user_state = {
+                'current_round': 0,
+                'current_match': 0,
+                'completed': False,
+                'winner_prompt_index': None
+            }
+        else:
+            user_state = {
+                'current_round': user_tournament.current_round,
+                'current_match': user_tournament.current_match,
+                'completed': user_tournament.completed,
+                'winner_prompt_index': user_tournament.winner_prompt_index
+            }
+        
+        # Build prompts and responses from TournamentPrompt records
+        prompts_data = [p.text for p in tournament.prompts]
+        responses_data = [p.response for p in tournament.prompts]
+        
+        return jsonify({
+            'id': tournament.id,
+            'question': tournament.question,
+            'prompts': prompts_data,
+            'responses': responses_data,
+            'bracket_template': tournament.bracket_template,
+            'user_bracket': user_bracket,
+            'user_state': user_state
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/<int:tournament_id>/status', methods=['GET'])
+def get_tournament_status(tournament_id):
+    """Get current user's tournament status"""
+    try:
+        user_id = get_user_id()
+        _, user_tournament, _ = TournamentService.get_tournament_with_user_state(
+            tournament_id, user_id
+        )
+        
+        if not user_tournament:
+            return jsonify({
+                'participated': False,
+                'completed': False,
+                'current_round': 0,
+                'current_match': 0,
+                'winner_prompt_index': None,
+                'started_at': None,
+                'completed_at': None
+            })
+        
+        return jsonify({
+            'participated': True,
+            'completed': user_tournament.completed,
+            'current_round': user_tournament.current_round,
+            'current_match': user_tournament.current_match,
+            'winner_prompt_index': user_tournament.winner_prompt_index,
+            'started_at': user_tournament.started_at.isoformat() if user_tournament.started_at else None,
+            'completed_at': user_tournament.completed_at.isoformat() if user_tournament.completed_at else None
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('/<int:tournament_id>/vote', methods=['POST'])
 def vote(tournament_id):
-    tournament = Tournament.query.get_or_404(tournament_id)
-    data = request.json or {}
-
-    round_number = data.get('round')
-    match_number = data.get('match')
-    winner_index = data.get('winner')
-
-    if round_number is None or match_number is None or winner_index is None:
-        return jsonify({"error": "Missing round, match or winner fields"}), 400
-
+    """Submit a vote for the current user"""
     try:
-        bracket, completed, winner_prompt = TournamentService.vote(tournament, round_number, match_number, winner_index)
+        user_id = get_user_id()
+        data = request.json or {}
+
+        round_number = data.get('round')
+        match_number = data.get('match')
+        winner_index = data.get('winner')
+
+        if round_number is None or match_number is None or winner_index is None:
+            return jsonify({"error": "Missing round, match or winner fields"}), 400
+
+        # Get tournament first
+        tournament, _, _ = TournamentService.get_tournament_with_user_state(tournament_id, user_id)
+        
+        user_bracket, completed, winner_prompt_index = TournamentService.record_vote(
+            tournament, user_id, round_number, match_number, winner_index
+        )
+        
+        return jsonify({
+            'user_bracket': user_bracket,
+            'completed': completed,
+            'winner_prompt_index': winner_prompt_index,
+            'user_id': user_id  # Return for debugging/tracking
+        })
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": "Unexpected error occurred"}), 500
 
-    return jsonify({
-        'bracket': bracket,
-        'completed': completed,
-        'winner_prompt': winner_prompt
-    })
+@bp.route('/<int:tournament_id>/results', methods=['GET'])
+def get_tournament_results(tournament_id):
+    """Get aggregated results for a tournament"""
+    try:
+        results = TournamentService.get_tournament_results(tournament_id)
+        stats = TournamentService.get_tournament_stats(tournament_id)
+        
+        return jsonify({
+            'results': results,
+            'stats': stats
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@bp.route('/<int:tournament_id>/participants', methods=['GET'])
+def get_tournament_participants(tournament_id):
+    """Get list of participants and their status"""
+    try:
+        participants = TournamentService.get_tournament_participants(tournament_id)
+        
+        return jsonify({
+            'participants': participants,
+            'total_count': len(participants)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @bp.route('', methods=['GET'])
 def get_tournaments():
-    tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all()
-    
-    result = []
-    for t in tournaments:
-        result.append({
-            'id': t.id,
-            'question': t.question[:100] + '...' if len(t.question) > 100 else t.question,
-            'num_prompts': len(json.loads(t.prompts)),
-            'completed': t.completed,
-            'created_at': t.created_at.isoformat()
-        })
-    
-    return jsonify(result)
+    """Get list of all tournaments with summary info"""
+    try:
+        tournaments = TournamentService.get_tournaments_list()
+        return jsonify(tournaments)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

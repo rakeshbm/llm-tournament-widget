@@ -10,3 +10,5 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or \
         (_raise := (_ for _ in ()).throw(RuntimeError("OPENROUTER_API_KEY not set")))
+    SECRET_KEY = os.getenv("SECRET_KEY") or \
+        (_raise := (_ for _ in ()).throw(RuntimeError("SECRET_KEY is not set")))

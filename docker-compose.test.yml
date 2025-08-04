@@ -4,30 +4,40 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tournament_test}
+      POSTGRES_USER: ${POSTGRES_USER:-test_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-test_password}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h localhost"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-test_user} -d ${POSTGRES_DB:-tournament_test} -h localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
       start_period: 10s
+    ports:
+      - "5432:5432"
 
   test:
     build:
       context: ./backend
+      dockerfile: Dockerfile
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-test_user}:${POSTGRES_PASSWORD:-test_password}@db:5432/${POSTGRES_DB:-tournament_test}
+      TESTING: "true"
+      PYTEST_ARGS: ${PYTEST_ARGS:-tests/ -v --tb=short}
     depends_on:
       db:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "pytest"]
+    volumes:
+      - ./backend:/app
+      - test_coverage:/app/htmlcov
+    working_dir: /app
+    entrypoint: ["sh", "-c", "pytest $PYTEST_ARGS"]
 
 volumes:
   db_data:
+  test_coverage:

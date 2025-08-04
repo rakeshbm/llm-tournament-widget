@@ -4,11 +4,11 @@ A web application that helps you discover the most effective prompts through hea
 
 ## Features
 
-- **Tournament Creation**: Set up competitions with 2-16 different prompts
+- **Tournament Creation**: Set up competitions with 2-8 different prompts
 - **Bracket System**: Automatic tournament bracket generation with proper bye handling
 - **Head-to-Head Voting**: Compare prompt responses side-by-side
 - **Tournament History**: View and continue past tournaments
-- **Progress Tracking**: Visual progress bars and completion status
+- **Progress Tracking**: Visual progress bars and completion status (user-specific)
 - **LLM Integration**: Automatic response generation using OpenRouter API
 
 ## Tech Stack
@@ -84,8 +84,8 @@ docker-compose down
 
 1. **Create a Tournament**:
    - Enter a question that all prompts should answer
-   - Add 2-16 different prompt variations
-   - Click "Begin Tournament"
+   - Add 2-8 different prompt variations
+   - Click "Submit"
 
 2. **Vote on Matches**:
    - Compare responses side-by-side
@@ -102,33 +102,11 @@ docker-compose down
 ### Tournaments
 - `POST /tournaments` - Create new tournament
 - `GET /tournaments` - List all tournaments
-- `GET /tournaments/{id}` - Get specific tournament
+- `GET /tournaments/{id}` - Get specific tournament with user state
+- `GET /tournaments/{id}/status` - Get current user's tournament status
 - `POST /tournaments/{id}/vote` - Submit vote for match
-
-### Request/Response Examples
-
-**Create Tournament:**
-```json
-POST /tournaments
-{
-  "question": "Explain climate change impact",
-  "prompts": [
-    "Explain in simple terms",
-    "Use scientific terminology",
-    "Focus on economic impacts"
-  ]
-}
-```
-
-**Submit Vote:**
-```json
-POST /tournaments/{id}/vote
-{
-  "round": 0,
-  "match": 0,
-  "winner": 1
-}
-```
+- `GET /tournaments/{id}/results` - Get aggregated tournament results
+- `GET /tournaments/{id}/participants` - Get list of participants and their status
 
 ### Project Structure
 ```

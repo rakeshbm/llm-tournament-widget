@@ -1,140 +1,48 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  TournamentCreator,
-  TournamentBracket,
-  TournamentHistory,
-  VotingModal,
-} from './components/tournament';
-import { useTournament } from './hooks';
-import * as Styled from './styles';
+  HomePage,
+  TournamentsPage,
+  CreateTournamentPage,
+  TournamentPage,
+} from './pages';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useMemo } from 'react';
 
 export default function App() {
-  const {
-    tournament,
-    tournaments,
-    loading,
-    error,
-    voteDialog,
-    vote,
-    resetTournament,
-    clearError,
-    createTournament,
-    loadTournament,
-    getCurrentMatchData,
-    getTournamentProgress,
-    closeVotingModal,
-    openVotingModal,
-  } = useTournament();
-
-  const currentMatchData = getCurrentMatchData();
-  const progressPercentage = getTournamentProgress();
-
-  const getLoadingMessage = (): string => {
-    if (!tournament) return 'Creating your tournament...';
-    return 'Loading tournament...';
-  };
-
-  const getWinnerMessage = (): string => {
-    if (!tournament?.winner_prompt) return '';
-    return `🏆 Winner prompt: ${tournament.winner_prompt}`;
-  };
+  // TODO: Separate the query client and import here
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: 5 * 60 * 1000, // 5 minutes
+            gcTime: 10 * 60 * 1000, // 10 minutes
+            retry: 1,
+            refetchOnWindowFocus: false,
+          },
+          mutations: {
+            retry: 0,
+          },
+        },
+      }),
+    []
+  );
 
   return (
-    <>
-      <Styled.AppContainer>
-        <Styled.Container>
-          <Styled.Header>
-            <Styled.Title>LLM Prompt Tournament</Styled.Title>
-            <Styled.Subtitle>
-              Discover which prompts work best through head-to-head competition
-            </Styled.Subtitle>
-            <Styled.Description>
-              Test multiple prompts against the same question and let voting
-              determine the winner. Perfect for finding the most effective
-              prompt variations.
-            </Styled.Description>
-          </Styled.Header>
-
-          {error && (
-            <Styled.ErrorAlert>
-              {error}
-              <Styled.CloseButton onClick={clearError}>×</Styled.CloseButton>
-            </Styled.ErrorAlert>
-          )}
-
-          {!tournament && (
-            <TournamentCreator
-              onCreateTournament={createTournament}
-              loading={loading}
-            />
-          )}
-
-          {tournament && (
-            <>
-              <Styled.TournamentCard>
-                <Styled.TournamentHeader>
-                  <Styled.TournamentInfo>
-                    <Styled.TournamentTitle>
-                      {tournament.question}
-                    </Styled.TournamentTitle>
-                    <Styled.TournamentMeta>
-                      Testing {tournament.prompts.length} different prompts
-                    </Styled.TournamentMeta>
-
-                    <Styled.ProgressBar>
-                      <Styled.ProgressFill width={`${progressPercentage}%`} />
-                    </Styled.ProgressBar>
-                    <Styled.ProgressText>
-                      {progressPercentage}% complete
-                    </Styled.ProgressText>
-
-                    {tournament.completed && tournament.winner_prompt && (
-                      <Styled.WinnerAlert>
-                        {getWinnerMessage()}
-                      </Styled.WinnerAlert>
-                    )}
-                  </Styled.TournamentInfo>
-
-                  <Styled.ButtonGroup>
-                    {!tournament.completed && (
-                      <Styled.PrimaryButton onClick={openVotingModal}>
-                        Continue Tournament
-                      </Styled.PrimaryButton>
-                    )}
-                    <Styled.SecondaryButton onClick={resetTournament}>
-                      Start New Tournament
-                    </Styled.SecondaryButton>
-                  </Styled.ButtonGroup>
-                </Styled.TournamentHeader>
-              </Styled.TournamentCard>
-
-              <TournamentBracket tournament={tournament} />
-            </>
-          )}
-
-          <TournamentHistory
-            tournaments={tournaments}
-            onLoadTournament={loadTournament}
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/home" element={<HomePage />} />
+          <Route path="/tournaments" element={<TournamentsPage />} />
+          <Route
+            path="/tournaments/create"
+            element={<CreateTournamentPage />}
           />
-
-          {voteDialog && tournament && currentMatchData && (
-            <VotingModal
-              tournament={tournament}
-              currentMatch={currentMatchData}
-              onVote={vote}
-              onClose={closeVotingModal}
-            />
-          )}
-        </Styled.Container>
-      </Styled.AppContainer>
-
-      {loading && (
-        <Styled.LoadingOverlay>
-          <Styled.LoadingContent>
-            <Styled.LoadingSpinner />
-            <Styled.LoadingText>{getLoadingMessage()}</Styled.LoadingText>
-          </Styled.LoadingContent>
-        </Styled.LoadingOverlay>
-      )}
-    </>
+          <Route path="/tournaments/:id" element={<TournamentPage />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
