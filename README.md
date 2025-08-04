@@ -102,33 +102,11 @@ docker-compose down
 ### Tournaments
 - `POST /tournaments` - Create new tournament
 - `GET /tournaments` - List all tournaments
-- `GET /tournaments/{id}` - Get specific tournament
+- `GET /tournaments/{id}` - Get specific tournament with user state
+- `GET /tournaments/{id}/status` - Get current user's tournament status
 - `POST /tournaments/{id}/vote` - Submit vote for match
-
-### Request/Response Examples
-
-**Create Tournament:**
-```json
-POST /tournaments
-{
-  "question": "Explain climate change impact",
-  "prompts": [
-    "Explain in simple terms",
-    "Use scientific terminology",
-    "Focus on economic impacts"
-  ]
-}
-```
-
-**Submit Vote:**
-```json
-POST /tournaments/{id}/vote
-{
-  "round": 0,
-  "match": 0,
-  "winner": 1
-}
-```
+- `GET /tournaments/{id}/results` - Get aggregated tournament results
+- `GET /tournaments/{id}/participants` - Get list of participants and their status
 
 ### Project Structure
 ```
