@@ -14,7 +14,7 @@ A web application that helps you discover the most effective prompts through hea
 ## Tech Stack
 
 **Frontend:**
-- React (Create React App)
+- React (Vite)
 - TypeScript
 - Styled Components
 - Docker + Nginx
@@ -23,7 +23,7 @@ A web application that helps you discover the most effective prompts through hea
 - Python 3.12
 - Flask
 - SQLAlchemy
-- SQLite Database
+- PostGreSQL
 - OpenRouter API Integration
 
 ## Quick Start
@@ -41,14 +41,21 @@ cd llm-tournament-widget
 ```
 
 2. Set up environment variables:
-```bash
-# Create a .env file in the "backend" directory
-echo "OPENROUTER_API_KEY=your_openrouter_api_key_here" > .env
+```python
+# Create a .env file in the project's root directory
+POSTGRES_USER=your_db_user
+POSTGRES_DB=your_db_name
+POSTGRES_PASSWORD=your_db_password
 ```
 
-```bash
+```python
+# Create a .env file in the "backend" directory
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+```python
 # Create a .env file in the "frontend" directory
-echo "REACT_APP_API_BASE=http://localhost:5000/api" > .env
+VITE_API_BASE=your_backend_url
 ```
 
 ### Running the Application
@@ -123,37 +130,21 @@ POST /tournaments/{id}/vote
 }
 ```
 
-## Development
-
-### Local Development (without Docker)
-
-**Backend:**
-```bash
-cd backend
-pip install -r requirements.txt
-export OPENROUTER_API_KEY=your_key_here
-python run.py
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm install
-npm start
-```
-
 ### Project Structure
 ```
 ├── backend/
 │   ├── app/
+|   |   |__ core/              # Core setup
 │   │   ├── models.py          # Database models
 │   │   ├── routes/            # API routes
 │   │   ├── services/          # Business logic
 │   │   └── utils.py           # Utility functions
+|   |   |__ config.py          # App config            
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
+|   |   |__ App.tsx
 │   │   ├── components/        # React components
 │   │   ├── hooks/             # Custom hooks
 │   │   ├── types/             # TypeScript types
@@ -165,11 +156,6 @@ npm start
 
 ## Configuration
 
-### Environment Variables
-
-- `OPENROUTER_API_KEY`: Required for LLM response generation
-- `DATABASE_URL`: Database connection string (defaults to SQLite)
-- `FLASK_ENV`: Flask environment (development/production)
 
 ### LLM Model
 
@@ -179,13 +165,19 @@ The application uses `mistralai/mistral-7b-instruct` by default. You can modify 
 LLM_MODEL = "mistralai/mistral-7b-instruct"  # Change this line
 ```
 
+## Running Tests
+
+```bash
+docker compose -f docker-compose.test.yml up --abort-on-container-exit --build
+```
+
 ## Troubleshooting
 
 **Common Issues:**
 
 1. **Port conflicts**: Change ports in `docker-compose.yml` if 3000 or 5000 are in use
 2. **API key errors**: Ensure `OPENROUTER_API_KEY` is set correctly
-3. **Database issues**: Delete `llm_tournament.db` to reset the database
+3. **Database issues**: Ensure `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are set correctly
 
 **Logs:**
 ```bash
