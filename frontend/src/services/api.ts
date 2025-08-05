@@ -4,8 +4,7 @@ import {
   Tournament,
   VoteRequest,
   VoteResponse,
-  TournamentResults,
-  UserTournamentStatus,
+  TournamentResults
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
@@ -43,16 +42,6 @@ export const tournamentApi = {
     });
     if (!response.ok) {
       throw new Error('Failed to load tournament');
-    }
-    return response.json();
-  },
-
-  getTournamentStatus: async (id: number): Promise<UserTournamentStatus> => {
-    const response = await fetch(`${API_BASE}/tournaments/${id}/status`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to get tournament status');
     }
     return response.json();
   },

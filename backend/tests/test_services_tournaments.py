@@ -293,27 +293,6 @@ class TestTournamentService:
         assert stats['completed_participants'] == 2
         assert stats['completion_rate'] == 66.67
 
-    def test_get_tournament_participants(self, sample_tournament, db_session):
-        """Test getting tournament participants"""
-        users = ["user1", "user2"]
-        for user_id in users:
-            user_tournament = UserTournament(
-                tournament_id=sample_tournament.id,
-                user_id=user_id,
-                current_round=0,
-                current_match=0
-            )
-            db_session.add(user_tournament)
-        
-        db_session.commit()
-        
-        participants = TournamentService.get_tournament_participants(sample_tournament.id)
-        
-        assert len(participants) == 2
-        assert all('user_id' in p for p in participants)
-        assert all('completed' in p for p in participants)
-        assert all('started_at' in p for p in participants)
-
     def test_get_tournaments_list(self, db_session):
         """Test getting tournaments list"""
         tournament1 = Tournament(

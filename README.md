@@ -103,10 +103,8 @@ docker-compose down
 - `POST /tournaments` - Create new tournament
 - `GET /tournaments` - List all tournaments
 - `GET /tournaments/{id}` - Get specific tournament with user state
-- `GET /tournaments/{id}/status` - Get current user's tournament status
 - `POST /tournaments/{id}/vote` - Submit vote for match
 - `GET /tournaments/{id}/results` - Get aggregated tournament results
-- `GET /tournaments/{id}/participants` - Get list of participants and their status
 
 ### Project Structure
 ```

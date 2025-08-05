@@ -53,16 +53,6 @@ export interface TournamentStats {
   completion_rate: number;
 }
 
-export interface UserTournamentStatus {
-  participated: boolean;
-  completed: boolean;
-  current_round: number;
-  current_match: number;
-  winner_prompt_index: number | null;
-  started_at: string | null;
-  completed_at: string | null;
-}
-
 export interface CreateTournamentRequest {
   question: string;
   prompts: string[];

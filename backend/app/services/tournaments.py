@@ -178,12 +178,10 @@ class TournamentService:
         
         # Check if this completes the tournament
         is_final_round = round_number == len(user_bracket) - 1
-        tournament_completed = False
         if is_final_round:
             user_tournament.completed = True
             user_tournament.completed_at = datetime.utcnow()
             user_tournament.winner_prompt_index = winner_index
-            tournament_completed = True
         else:
             # Find next match
             next_round, next_match = TournamentService._find_next_votable_match_after_vote(user_bracket)
@@ -211,7 +209,7 @@ class TournamentService:
 
     @staticmethod
     def get_tournament_results(tournament_id):
-        """Get aggregated results - race condition and N+1 safe"""
+        """Get aggregated results"""
         # Single atomic query gets all data
         results = db.session.query(
             TournamentPrompt.position,
@@ -261,23 +259,6 @@ class TournamentService:
             'completion_rate': round((completed / total * 100), 2) if total > 0 else 0
         }
 
-    @staticmethod
-    def get_tournament_participants(tournament_id):
-        """Get list of participants and their status"""
-        participants = UserTournament.query.filter_by(tournament_id=tournament_id).all()
-        
-        return [
-            {
-                'user_id': participant.user_id[:8] + '...',
-                'completed': participant.completed,
-                'current_round': participant.current_round,
-                'current_match': participant.current_match,
-                'started_at': participant.started_at.isoformat(),
-                'completed_at': participant.completed_at.isoformat() if participant.completed_at else None
-            } for participant in participants
-        ]
-
-    # TODO: Optimize read performance
     @staticmethod
     def get_tournaments_list():
         """Get list of all tournaments"""

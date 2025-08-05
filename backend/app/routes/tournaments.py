@@ -1,4 +1,3 @@
-import json
 from flask import Blueprint, request, jsonify, session
 from app.services.tournaments import TournamentService
 import uuid
@@ -80,38 +79,6 @@ def get_tournament(tournament_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/<int:tournament_id>/status', methods=['GET'])
-def get_tournament_status(tournament_id):
-    """Get current user's tournament status"""
-    try:
-        user_id = get_user_id()
-        _, user_tournament, _ = TournamentService.get_tournament_with_user_state(
-            tournament_id, user_id
-        )
-        
-        if not user_tournament:
-            return jsonify({
-                'participated': False,
-                'completed': False,
-                'current_round': 0,
-                'current_match': 0,
-                'winner_prompt_index': None,
-                'started_at': None,
-                'completed_at': None
-            })
-        
-        return jsonify({
-            'participated': True,
-            'completed': user_tournament.completed,
-            'current_round': user_tournament.current_round,
-            'current_match': user_tournament.current_match,
-            'winner_prompt_index': user_tournament.winner_prompt_index,
-            'started_at': user_tournament.started_at.isoformat() if user_tournament.started_at else None,
-            'completed_at': user_tournament.completed_at.isoformat() if user_tournament.completed_at else None
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 @bp.route('/<int:tournament_id>/vote', methods=['POST'])
 def vote(tournament_id):
     """Submit a vote for the current user"""
@@ -137,7 +104,7 @@ def vote(tournament_id):
             'user_bracket': user_bracket,
             'completed': completed,
             'winner_prompt_index': winner_prompt_index,
-            'user_id': user_id  # Return for debugging/tracking
+            'user_id': user_id
         })
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -154,19 +121,6 @@ def get_tournament_results(tournament_id):
         return jsonify({
             'results': results,
             'stats': stats
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-@bp.route('/<int:tournament_id>/participants', methods=['GET'])
-def get_tournament_participants(tournament_id):
-    """Get list of participants and their status"""
-    try:
-        participants = TournamentService.get_tournament_participants(tournament_id)
-        
-        return jsonify({
-            'participants': participants,
-            'total_count': len(participants)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

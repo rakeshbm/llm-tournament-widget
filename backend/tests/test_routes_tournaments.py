@@ -123,40 +123,7 @@ def test_get_tournament_existing_user(client):
         data = response.get_json()
         assert data['user_state']['completed'] is True
         assert data['user_state']['winner_prompt_index'] == 1
-
-def test_get_tournament_status_new_user(client):
-    """Test getting tournament status for new user"""
-    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
-        mock_get.return_value = (MagicMock(), None, [])
-        
-        response = client.get('/api/tournaments/1/status')
-        
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['participated'] is False
-        assert data['completed'] is False
-        assert data['started_at'] is None
-
-def test_get_tournament_status_existing_user(client):
-    """Test getting tournament status for existing user"""
-    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
-        mock_user_tournament = MagicMock()
-        mock_user_tournament.completed = True
-        mock_user_tournament.current_round = 1
-        mock_user_tournament.current_match = 0
-        mock_user_tournament.winner_prompt_index = 2
-        mock_user_tournament.started_at.isoformat.return_value = "2024-01-01T00:00:00"
-        mock_user_tournament.completed_at.isoformat.return_value = "2024-01-01T00:05:00"
-        
-        mock_get.return_value = (MagicMock(), mock_user_tournament, [])
-        
-        response = client.get('/api/tournaments/1/status')
-        
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data['participated'] is True
-        assert data['completed'] is True
-        assert data['winner_prompt_index'] == 2
+        assert data['user_bracket'][0][0]['winner'] == 1
 
 def test_vote_success(client):
     """Test successful vote submission"""
@@ -297,39 +264,6 @@ def test_get_tournament_results(client):
             assert data['stats']['completion_rate'] == 80.0
             assert data['results'][0]['win_percentage'] == 50.0
 
-def test_get_tournament_participants(client):
-    """Test getting tournament participants"""
-    with patch('app.routes.tournaments.TournamentService.get_tournament_participants') as mock_participants:
-        mock_participants.return_value = [
-            {
-                'user_id': 'abc123...',
-                'completed': True,
-                'current_round': 1,
-                'current_match': 0,
-                'started_at': '2024-01-01T00:00:00',
-                'completed_at': '2024-01-01T00:05:00'
-            },
-            {
-                'user_id': 'def456...',
-                'completed': False,
-                'current_round': 0,
-                'current_match': 1,
-                'started_at': '2024-01-01T00:02:00',
-                'completed_at': None
-            }
-        ]
-        
-        response = client.get('/api/tournaments/1/participants')
-        
-        assert response.status_code == 200
-        data = response.get_json()
-        assert 'participants' in data
-        assert 'total_count' in data
-        assert data['total_count'] == 2
-        assert len(data['participants']) == 2
-        assert data['participants'][0]['completed'] is True
-        assert data['participants'][1]['completed'] is False
-
 def test_get_tournaments_list(client):
     """Test getting list of all tournaments"""
     with patch('app.routes.tournaments.TournamentService.get_tournaments_list') as mock_list:
@@ -362,28 +296,6 @@ def test_get_tournaments_list(client):
         assert data[0]['id'] == 1
         assert data[1]['completion_rate'] == 60.0
         assert data[0]['num_prompts'] == 4
-
-def test_session_user_id_generation(client):
-    """Test that user ID is generated and persisted in session"""
-    with client.session_transaction() as sess:
-        assert 'user_id' not in sess
-    
-    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
-        mock_get.return_value = (MagicMock(), None, [])
-        client.get('/api/tournaments/1/status')
-    
-    with client.session_transaction() as sess:
-        assert 'user_id' in sess
-        assert len(sess['user_id']) > 0
-        
-        first_user_id = sess['user_id']
-    
-    with patch('app.routes.tournaments.TournamentService.get_tournament_with_user_state') as mock_get:
-        mock_get.return_value = (MagicMock(), None, [])
-        client.get('/api/tournaments/1/status')
-    
-    with client.session_transaction() as sess:
-        assert sess['user_id'] == first_user_id
 
 def test_error_handling_in_routes(client):
     """Test generic error handling in routes"""
