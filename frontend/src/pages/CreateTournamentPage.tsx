@@ -5,9 +5,17 @@ import { CreateTournamentRequest } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from '../components';
 
+interface PromptItem {
+  id: string;
+  value: string;
+}
+
 export const CreateTournamentPage = () => {
   const [question, setQuestion] = useState('');
-  const [prompts, setPrompts] = useState(['', '']);
+  const [prompts, setPrompts] = useState<PromptItem[]>([
+    { id: crypto.randomUUID(), value: '' },
+    { id: crypto.randomUUID(), value: '' }
+  ]);
   const { mutate: createTournament, isPending } = useCreateTournament();
   const navigate = useNavigate();
 
@@ -25,31 +33,11 @@ export const CreateTournamentPage = () => {
     [createTournament, navigate]
   );
 
-  const addPrompt = useCallback(() => {
-    if (prompts.length < 8) {
-      setPrompts((prev) => [...prev, '']);
-    }
-  }, [prompts.length]);
-
-  const removePrompt = useCallback(
-    (index: number) => {
-      if (prompts.length > 2) {
-        setPrompts((prev) => prev.filter((_, i) => i !== index));
-      }
-    },
-    [prompts.length]
-  );
-
-  const updatePrompt = useCallback((index: number, value: string) => {
-    setPrompts((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
-  }, []);
-
   const handleSubmit = useCallback(() => {
-    const validPrompts = prompts.filter((p) => p.trim());
+    const validPrompts = prompts
+      .map(p => p.value.trim())
+      .filter(p => p.length > 0);
+    
     if (question.trim() && validPrompts.length >= 2) {
       const createTournamentRequest: CreateTournamentRequest = {
         question: question.trim(),
@@ -59,8 +47,30 @@ export const CreateTournamentPage = () => {
     }
   }, [question, prompts, handleCreateTournament]);
 
+  const addPrompt = () => {
+    if (prompts.length < 8) {
+      setPrompts(prev => [...prev, { id: crypto.randomUUID(), value: '' }]);
+    }
+  };
+
+  const removePrompt = (id: string) => {
+    if (prompts.length > 2) {
+      setPrompts(prev => prev.filter(prompt => prompt.id !== id));
+    }
+  };
+
+  const updatePrompt = (id: string, value: string) => {
+    setPrompts(prev => 
+      prev.map(prompt => 
+        prompt.id === id ? { ...prompt, value } : prompt
+      )
+    );
+  };
+
   const canSubmit =
-    question.trim() && prompts.every((p) => p.trim()) && !isPending;
+    question.trim() && 
+    prompts.every(p => p.value.trim()) && 
+    !isPending;
 
   return (
     <>
@@ -84,16 +94,16 @@ export const CreateTournamentPage = () => {
         <Styled.FormGroup>
           <Styled.Label>Competing Prompts (2-8 prompts)</Styled.Label>
           {prompts.map((prompt, index) => (
-            <Styled.PromptRow key={index}>
+            <Styled.PromptRow key={prompt.id}>
               <Styled.TextArea
                 rows={2}
                 placeholder={`Prompt ${index + 1}`}
-                value={prompt}
-                onChange={(e) => updatePrompt(index, e.target.value)}
+                value={prompt.value}
+                onChange={(e) => updatePrompt(prompt.id, e.target.value)}
                 disabled={isPending}
               />
               <Styled.RemoveButton
-                onClick={() => removePrompt(index)}
+                onClick={() => removePrompt(prompt.id)}
                 disabled={prompts.length <= 2 || isPending}
               >
                 ×
@@ -109,7 +119,6 @@ export const CreateTournamentPage = () => {
               Add Prompt
             </Styled.SecondaryButton>
             <Styled.PrimaryButton onClick={handleSubmit} disabled={!canSubmit}>
-              {' '}
               Submit
             </Styled.PrimaryButton>
           </Styled.ButtonRow>

@@ -492,24 +492,3 @@ class TestTournamentService:
         
         assert next_round == 0
         assert next_match == 1
-
-    def test_get_or_create_user_tournament_existing(self, sample_tournament, sample_user_tournament, db_session):
-        """Test getting existing user tournament"""
-        result = TournamentService.get_or_create_user_tournament(
-            sample_tournament.id, 
-            sample_user_tournament.user_id
-        )
-        
-        assert result.id == sample_user_tournament.id
-
-    def test_get_or_create_user_tournament_new(self, sample_tournament, db_session):
-        """Test creating new user tournament"""
-        result = TournamentService.get_or_create_user_tournament(
-            sample_tournament.id, 
-            "completely_new_user"
-        )
-        
-        assert result is not None
-        assert result.user_id == "completely_new_user"
-        assert result.tournament_id == sample_tournament.id
-        assert result.completed is False

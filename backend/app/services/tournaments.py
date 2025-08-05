@@ -85,27 +85,6 @@ class TournamentService:
                     )
         
         return user_bracket
-    
-    @staticmethod
-    def get_or_create_user_tournament(tournament_id, user_id):
-        """Get existing user tournament or create new one"""
-        user_tournament = UserTournament.query.filter_by(
-            tournament_id=tournament_id,
-            user_id=user_id
-        ).first()
-        
-        if not user_tournament:
-            user_tournament = UserTournament(
-                tournament_id=tournament_id,
-                user_id=user_id,
-                current_round=0,
-                current_match=0,
-                completed=False
-            )
-            db.session.add(user_tournament)
-            db.session.flush()
-        
-        return user_tournament
 
     @staticmethod
     def _advance_winner_in_bracket(bracket, round_number, match_number, winner_index):

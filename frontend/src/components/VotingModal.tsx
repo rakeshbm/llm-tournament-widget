@@ -50,7 +50,7 @@ export const VotingModal = memo<VotingModalProps>(
       <Styled.ModalOverlay onClick={handleOverlayClick}>
         <Styled.ModalContent onClick={handleStopPropagation}>
           <Styled.ModalHeader>
-            <Styled.ModalTitle>Which Response is Better?</Styled.ModalTitle>
+            <Styled.ModalTitle>Which response is better?</Styled.ModalTitle>
             <Styled.ModalSubtitle>
               Question: "{tournament.question}"
             </Styled.ModalSubtitle>
