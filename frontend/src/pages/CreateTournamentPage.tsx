@@ -14,7 +14,7 @@ export const CreateTournamentPage = () => {
   const [question, setQuestion] = useState('');
   const [prompts, setPrompts] = useState<PromptItem[]>([
     { id: crypto.randomUUID(), value: '' },
-    { id: crypto.randomUUID(), value: '' }
+    { id: crypto.randomUUID(), value: '' },
   ]);
   const { mutate: createTournament, isPending } = useCreateTournament();
   const navigate = useNavigate();
@@ -35,9 +35,9 @@ export const CreateTournamentPage = () => {
 
   const handleSubmit = useCallback(() => {
     const validPrompts = prompts
-      .map(p => p.value.trim())
-      .filter(p => p.length > 0);
-    
+      .map((p) => p.value.trim())
+      .filter((p) => p.length > 0);
+
     if (question.trim() && validPrompts.length >= 2) {
       const createTournamentRequest: CreateTournamentRequest = {
         question: question.trim(),
@@ -49,28 +49,24 @@ export const CreateTournamentPage = () => {
 
   const addPrompt = () => {
     if (prompts.length < 8) {
-      setPrompts(prev => [...prev, { id: crypto.randomUUID(), value: '' }]);
+      setPrompts((prev) => [...prev, { id: crypto.randomUUID(), value: '' }]);
     }
   };
 
   const removePrompt = (id: string) => {
     if (prompts.length > 2) {
-      setPrompts(prev => prev.filter(prompt => prompt.id !== id));
+      setPrompts((prev) => prev.filter((prompt) => prompt.id !== id));
     }
   };
 
   const updatePrompt = (id: string, value: string) => {
-    setPrompts(prev => 
-      prev.map(prompt => 
-        prompt.id === id ? { ...prompt, value } : prompt
-      )
+    setPrompts((prev) =>
+      prev.map((prompt) => (prompt.id === id ? { ...prompt, value } : prompt))
     );
   };
 
   const canSubmit =
-    question.trim() && 
-    prompts.every(p => p.value.trim()) && 
-    !isPending;
+    question.trim() && prompts.every((p) => p.value.trim()) && !isPending;
 
   return (
     <>

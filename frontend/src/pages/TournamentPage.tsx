@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { VoteRequest } from '../types';
 import { findNextVotableMatch, getMatchParticipants } from '../utils';
 import { useParams } from 'react-router-dom';
@@ -34,24 +34,39 @@ export const TournamentPage = () => {
   const { mutate: recordVote, isPending: isVoting } =
     useRecordVote(tournamentId);
 
+  const currentMatch = useMemo(() => {
+    return tournament?.user_bracket
+      ? findNextVotableMatch(tournament.user_bracket)
+      : null;
+  }, [tournament?.user_bracket]);
+
+  const currentMatchData = useMemo(() => {
+    if (!currentMatch || !tournament) return null;
+
+    return {
+      round: currentMatch.round,
+      match: currentMatch.match,
+      ...getMatchParticipants(
+        tournament.user_bracket[currentMatch.round][currentMatch.match],
+        tournament.prompts,
+        tournament.responses
+      ),
+    };
+  }, [currentMatch, tournament]);
+
   // Only open if user wants to vote
   useEffect(() => {
     if (
       tournament?.user_state &&
       !tournament.user_state.completed &&
       !isVoting &&
-      userWantsToVote
+      userWantsToVote &&
+      currentMatch &&
+      !isVotingModalOpen
     ) {
-      const nextMatch = findNextVotableMatch(tournament.user_bracket);
-      const hasVotedBefore =
-        tournament.user_state.current_round > 0 ||
-        tournament.user_state.current_match > 0;
-
-      if (nextMatch && !isVotingModalOpen && hasVotedBefore) {
-        setIsVotingModalOpen(true);
-      }
+      setIsVotingModalOpen(true);
     }
-  }, [tournament, isVoting, isVotingModalOpen, userWantsToVote]);
+  }, [tournament, isVoting, isVotingModalOpen, userWantsToVote, currentMatch]);
 
   const handleCloseVotingModal = useCallback(() => {
     setIsVotingModalOpen(false);
@@ -59,25 +74,23 @@ export const TournamentPage = () => {
   }, []);
 
   const handleOpenVotingModal = useCallback(() => {
-    if (tournament?.user_state && !tournament.user_state.completed) {
-      const nextMatch = findNextVotableMatch(tournament.user_bracket);
-      if (nextMatch) {
-        setUserWantsToVote(true);
-        setIsVotingModalOpen(true);
-      }
+    if (
+      tournament?.user_state &&
+      !tournament.user_state.completed &&
+      currentMatch
+    ) {
+      setUserWantsToVote(true);
+      setIsVotingModalOpen(true);
     }
-  }, [tournament]);
+  }, [tournament, currentMatch]);
 
   const handleVote = useCallback(
     (winnerIndex: number) => {
-      if (!tournament || isVoting) return;
-
-      const nextMatch = findNextVotableMatch(tournament.user_bracket);
-      if (!nextMatch) return;
+      if (!tournament || isVoting || !currentMatch) return;
 
       const voteRequest: VoteRequest = {
-        round: nextMatch.round,
-        match: nextMatch.match,
+        round: currentMatch.round,
+        match: currentMatch.match,
         winner: winnerIndex,
       };
 
@@ -96,7 +109,14 @@ export const TournamentPage = () => {
         },
       });
     },
-    [tournament, recordVote, isVoting, refetchTournament, refetchResults]
+    [
+      tournament,
+      recordVote,
+      isVoting,
+      currentMatch,
+      refetchTournament,
+      refetchResults,
+    ]
   );
 
   if (isLoading) {
@@ -107,24 +127,10 @@ export const TournamentPage = () => {
     return (
       <EmptyState
         title="Tournament not found"
-        description="We couldn’t locate a tournament with that ID. It may have been deleted, the link is incorrect, or something went wrong."
+        description="We couldn't locate a tournament with that ID. It may have been deleted, the link is incorrect, or something went wrong."
       />
     );
   }
-
-  // Find current votable match
-  const currentMatch = findNextVotableMatch(tournament.user_bracket);
-  const currentMatchData = currentMatch
-    ? {
-        round: currentMatch.round,
-        match: currentMatch.match,
-        ...getMatchParticipants(
-          tournament.user_bracket[currentMatch.round][currentMatch.match],
-          tournament.prompts,
-          tournament.responses
-        ),
-      }
-    : null;
 
   return (
     <>

@@ -51,7 +51,7 @@ export const TournamentBracket = memo<TournamentBracketProps>(
                 </Styled.RoundLabel>
                 {round.map((match, matchIndex) => (
                   <BracketMatch
-                    key={matchIndex}
+                    key={`${roundIndex}-${matchIndex}`}
                     match={match}
                     getPromptResponse={getPromptResponse}
                   />

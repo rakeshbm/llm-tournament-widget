@@ -1,4 +1,4 @@
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
 import * as Styled from '../styles';
 import { Tournament } from '../types';
 import { getRoundDisplayName } from '../utils';
@@ -17,38 +17,15 @@ interface VotingModalProps {
 
 export const VotingModal = memo<VotingModalProps>(
   ({ tournament, currentMatchData, onVote, onClose }) => {
-    const handleOverlayClick = useCallback(
-      (e: React.MouseEvent) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      },
-      [onClose]
-    );
-
-    const handleStopPropagation = useCallback((e: React.MouseEvent) => {
-      e.stopPropagation();
-    }, []);
-
-    const handleVote1 = useCallback(() => {
-      if (currentMatchData.participant1) {
-        onVote(currentMatchData.participant1.index);
-      }
-    }, [currentMatchData, onVote]);
-
-    const handleVote2 = useCallback(() => {
-      if (currentMatchData.participant2) {
-        onVote(currentMatchData.participant2.index);
-      }
-    }, [currentMatchData, onVote]);
-
     if (!currentMatchData.participant1 || !currentMatchData.participant2) {
       return null;
     }
 
     return (
-      <Styled.ModalOverlay onClick={handleOverlayClick}>
-        <Styled.ModalContent onClick={handleStopPropagation}>
+      <Styled.ModalOverlay
+        onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
+        <Styled.ModalContent>
           <Styled.ModalHeader>
             <Styled.ModalTitle>Which response is better?</Styled.ModalTitle>
             <Styled.ModalSubtitle>
@@ -67,13 +44,17 @@ export const VotingModal = memo<VotingModalProps>(
           </Styled.ModalHeader>
           <Styled.ModalBody>
             <Styled.ResponseGrid>
-              <Styled.ResponseCard onClick={handleVote1}>
+              <Styled.ResponseCard
+                onClick={() => onVote(currentMatchData.participant1!.index)}
+              >
                 <Styled.ResponseText>
                   {currentMatchData.participant1.response}
                 </Styled.ResponseText>
               </Styled.ResponseCard>
 
-              <Styled.ResponseCard onClick={handleVote2}>
+              <Styled.ResponseCard
+                onClick={() => onVote(currentMatchData.participant2!.index)}
+              >
                 <Styled.ResponseText>
                   {currentMatchData.participant2.response}
                 </Styled.ResponseText>
