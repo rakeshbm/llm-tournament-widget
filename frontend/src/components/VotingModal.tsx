@@ -66,3 +66,5 @@ export const VotingModal = memo<VotingModalProps>(
     );
   }
 );
+
+VotingModal.displayName = 'VotingModal';

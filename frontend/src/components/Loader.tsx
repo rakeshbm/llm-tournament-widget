@@ -15,3 +15,5 @@ export const Loader = memo<LoaderProps>(({ text = 'Please wait...' }) => {
     </Styled.LoadingOverlay>
   );
 });
+
+Loader.displayName = 'Loader';

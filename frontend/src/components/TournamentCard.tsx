@@ -33,3 +33,5 @@ export const TournamentCard = memo<TournamentCardProps>(({ tournament }) => (
     </Styled.HistoryActions>
   </Styled.HistoryCard>
 ));
+
+TournamentCard.displayName = 'TournamentCard';

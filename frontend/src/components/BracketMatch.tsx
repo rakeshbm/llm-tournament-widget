@@ -63,3 +63,5 @@ export const BracketMatch = memo<BracketMatchProps>(
     );
   }
 );
+
+BracketMatch.displayName = 'BracketMatch';

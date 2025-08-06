@@ -74,3 +74,5 @@ export const TournamentHeader = memo<TournamentHeaderProps>(
     );
   }
 );
+
+TournamentHeader.displayName = 'TournamentHeader';

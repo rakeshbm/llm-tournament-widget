@@ -16,3 +16,5 @@ export function EmptyState({ icon, title, description }: EmptyStateProps) {
     </Styled.EmptyState>
   );
 }
+
+EmptyState.displayName = 'EmptyState';

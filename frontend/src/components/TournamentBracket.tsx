@@ -64,3 +64,5 @@ export const TournamentBracket = memo<TournamentBracketProps>(
     );
   }
 );
+
+TournamentBracket.displayName = 'TournamentBracket';

@@ -50,3 +50,5 @@ export const TournamentResultsSection = memo<TournamentResultsSectionProps>(
     );
   }
 );
+
+TournamentResultsSection.displayName = 'TournamentResultsSection';

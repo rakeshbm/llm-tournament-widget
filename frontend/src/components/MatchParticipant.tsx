@@ -45,3 +45,5 @@ export const MatchParticipant = memo<MatchParticipantProps>(
     );
   }
 );
+
+MatchParticipant.displayName = 'MatchParticipant';
