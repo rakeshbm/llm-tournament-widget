@@ -1,4 +1,4 @@
-# LLM Tournament Widget
+# LLM Prompt Arena
 
 A web application that helps you discover the most effective prompts through head-to-head competition. Test multiple prompt variations against the same question and let voting determine the winner in a tournament-style bracket.
 
