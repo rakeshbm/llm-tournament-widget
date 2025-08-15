@@ -2,19 +2,24 @@ import copy
 from datetime import datetime
 from app.models import Tournament, TournamentPrompt, UserTournament, Vote
 from app import db
-from app.utils import create_bracket, generate_llm_response
-from sqlalchemy import func, case
-from sqlalchemy.orm import joinedload, selectinload
+from app.utils import create_bracket
+from sqlalchemy import func, case, and_
+from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.attributes import flag_modified
+from app.clients.open_router import OpenRouterClient
+
+client = OpenRouterClient()
 
 class TournamentService:
     @staticmethod
-    def create_tournament(question, prompts):
-        """Create a new tournament with LLM responses"""
-        responses = [generate_llm_response(prompt, question) for prompt in prompts]
+    def create_tournament(question, prompt_data_list):
+        """Create a new tournament with LLM responses"""        
+        # Generate responses
+        responses = client.generate_completions(prompt_data_list, question)
         if any(response is None or response.strip() == "" for response in responses):
             raise RuntimeError("Failed to generate one or more LLM responses. Tournament not created.")
         
-        bracket_template = create_bracket(prompts)
+        bracket_template = create_bracket(prompt_data_list)
 
         tournament = Tournament(
             question=question,
@@ -28,84 +33,42 @@ class TournamentService:
             TournamentPrompt(
                 tournament_id=tournament.id,
                 position=i,
-                text=prompt,
+                text=prompt_data['text'],
+                model=prompt_data['model'],
                 response=response
-            ) for i, (prompt, response) in enumerate(zip(prompts, responses))
+            ) for i, (prompt_data, response) in enumerate(zip(prompt_data_list, responses))
         ]
         db.session.bulk_save_objects(tournament_prompts)
         db.session.commit()
-        return tournament
+        
+        return Tournament.query.options(selectinload(Tournament.prompts)).get(tournament.id)
     
     @staticmethod
     def get_tournament_with_user_state(tournament_id, user_id):
         """Get tournament with user state"""
         tournament = Tournament.query.options(
-            selectinload(Tournament.user_tournaments.and_(
-                UserTournament.user_id == user_id
-            )).selectinload(UserTournament.votes),
             selectinload(Tournament.prompts)
         ).get_or_404(tournament_id)
         
-        user_tournament = next(
-            (ut for ut in tournament.user_tournaments if ut.user_id == user_id), 
-            None
-        )
-        
-        # Build user bracket state
-        if user_tournament and user_tournament.votes:
-            user_bracket = TournamentService._build_user_bracket(
-                tournament.bracket_template, user_tournament.votes
+        # Get user tournament
+        user_tournament = UserTournament.query.filter(
+            and_(
+                UserTournament.tournament_id == tournament_id,
+                UserTournament.user_id == user_id
             )
+        ).first()
+        
+        # Get user bracket or create new one
+        if user_tournament and user_tournament.current_bracket:
+            user_bracket = user_tournament.current_bracket
         else:
             user_bracket = copy.deepcopy(tournament.bracket_template)
         
         return tournament, user_tournament, user_bracket
-    
-    @staticmethod
-    def _build_user_bracket(bracket_template, user_votes):
-        """Build user-specific bracket"""
-        if not user_votes:
-            return copy.deepcopy(bracket_template)
-        
-        user_bracket = copy.deepcopy(bracket_template)
-        
-        sorted_votes = sorted(user_votes, key=lambda v: (v.round_number, v.match_number))
-        
-        # Apply votes in order
-        for vote in sorted_votes:
-            if (vote.round_number < len(user_bracket) and 
-                vote.match_number < len(user_bracket[vote.round_number])):
-                
-                # Apply vote
-                match = user_bracket[vote.round_number][vote.match_number]
-                if match.get('winner') is None:
-                    match['winner'] = vote.winner_index
-                    TournamentService._advance_winner_in_bracket(
-                        user_bracket, vote.round_number, vote.match_number, vote.winner_index
-                    )
-        
-        return user_bracket
 
     @staticmethod
-    def _advance_winner_in_bracket(bracket, round_number, match_number, winner_index):
-        """Advance winner to next round in bracket"""
-        if round_number < len(bracket) - 1:
-            next_round = round_number + 1
-            next_match = match_number // 2
-            
-            if match_number % 2 == 0:
-                bracket[next_round][next_match]['participant1'] = winner_index
-            else:
-                bracket[next_round][next_match]['participant2'] = winner_index
-
-    @staticmethod
-    def validate_vote(user_bracket, round_number, match_number, winner_index, existing_votes):
+    def _validate_vote(user_bracket, round_number, match_number, winner_index):
         """Vote validation logic"""
-        # Check for existing vote
-        existing_vote_keys = {(vote.round_number, vote.match_number) for vote in existing_votes}
-        if (round_number, match_number) in existing_vote_keys:
-            raise ValueError("User has already voted for this match")
-        
         # Validate round and match numbers
         if round_number >= len(user_bracket):
             raise ValueError("Invalid round number")
@@ -132,33 +95,43 @@ class TournamentService:
     @staticmethod
     def record_vote(tournament, user_id, round_number, match_number, winner_index):
         """Record a vote and update user tournament state"""
-        user_tournament = UserTournament.query.options(
-            joinedload(UserTournament.votes)
-        ).filter_by(
-            tournament_id=tournament.id,
-            user_id=user_id
+        # Get user tournament
+        user_tournament = UserTournament.query.filter(
+            and_(
+                UserTournament.tournament_id == tournament.id,
+                UserTournament.user_id == user_id
+            )
         ).first()
         
         if not user_tournament:
             user_tournament = UserTournament(
                 tournament_id=tournament.id,
                 user_id=user_id,
-                current_round=0,
-                current_match=0,
+                current_bracket=copy.deepcopy(tournament.bracket_template),
                 completed=False
             )
             db.session.add(user_tournament)
             db.session.flush()
-            user_tournament.votes = []
         
-        # Validate vote using current bracket state
-        user_bracket = TournamentService._build_user_bracket(
-            tournament.bracket_template, user_tournament.votes
-        )
+        if not user_tournament.current_bracket:
+            user_tournament.current_bracket = copy.deepcopy(tournament.bracket_template)
         
-        TournamentService.validate_vote(
-            user_bracket, round_number, match_number, winner_index, user_tournament.votes
-        )
+        user_bracket = copy.deepcopy(user_tournament.current_bracket)
+        
+        # Validate vote
+        TournamentService._validate_vote(user_bracket, round_number, match_number, winner_index)
+        
+        # Check for existing vote
+        existing_vote = Vote.query.filter(
+            and_(
+                Vote.user_tournament_id == user_tournament.id,
+                Vote.round_number == round_number,
+                Vote.match_number == match_number
+            )
+        ).first()
+        
+        if existing_vote:
+            raise ValueError("User has already voted for this match")
         
         # Create vote record
         vote_record = Vote(
@@ -168,13 +141,18 @@ class TournamentService:
             winner_index=winner_index
         )
         db.session.add(vote_record)
-        user_tournament.votes.append(vote_record)
         
-        # Update bracket with new vote (incremental)
-        user_bracket[round_number][match_number]['winner'] = winner_index
+        # Update bracket state
+        current_match = user_bracket[round_number][match_number]
+        current_match['winner'] = winner_index
+        
+        # Advance winner to next round
         TournamentService._advance_winner_in_bracket(
             user_bracket, round_number, match_number, winner_index
         )
+        
+        user_tournament.current_bracket = user_bracket
+        flag_modified(user_tournament, 'current_bracket')
         
         # Check if this completes the tournament
         is_final_round = round_number == len(user_bracket) - 1
@@ -182,60 +160,58 @@ class TournamentService:
             user_tournament.completed = True
             user_tournament.completed_at = datetime.utcnow()
             user_tournament.winner_prompt_index = winner_index
-        else:
-            # Find next match
-            next_round, next_match = TournamentService._find_next_votable_match_after_vote(user_bracket)
-            user_tournament.current_round = next_round if next_round is not None else round_number
-            user_tournament.current_match = next_match if next_match is not None else match_number
         
         db.session.commit()
         
         return user_bracket, user_tournament.completed, user_tournament.winner_prompt_index
 
     @staticmethod
-    def _find_next_votable_match_after_vote(user_bracket):
-        """Find next votable match"""
-        for round_num, round_matches in enumerate(user_bracket):
-            for match_num, match in enumerate(round_matches):
-                p1 = match.get('participant1')
-                p2 = match.get('participant2')
-                
-                if (p1 is not None and p1 != -1 and 
-                    p2 is not None and p2 != -1 and
-                    match.get('winner') is None):
-                    return round_num, match_num
+    def _advance_winner_in_bracket(bracket, round_number, match_number, winner_index):
+        """Advance winner to next round in bracket"""
+        if round_number >= len(bracket) - 1:
+            return
         
-        return None, None
+        next_round = round_number + 1
+        next_match = match_number // 2
+        
+        if next_round < len(bracket) and next_match < len(bracket[next_round]):
+            if match_number % 2 == 0:
+                bracket[next_round][next_match]['participant1'] = winner_index
+            else:
+                bracket[next_round][next_match]['participant2'] = winner_index
 
     @staticmethod
-    def get_tournament_results(tournament_id):
-        """Get aggregated results"""
-        # Single atomic query gets all data
+    def get_prompt_rankings(tournament_id):
+        """Get prompt performance rankings"""
         results = db.session.query(
             TournamentPrompt.position,
             TournamentPrompt.text,
-            func.count(UserTournament.id).filter(UserTournament.completed == True).label('total_participants'),
+            TournamentPrompt.model,
+            func.count(UserTournament.id).filter(UserTournament.completed == True).label('completed_participants'),
             func.count(UserTournament.id).filter(
-                UserTournament.completed == True,
-                UserTournament.winner_prompt_index == TournamentPrompt.position
+                and_(
+                    UserTournament.completed == True,
+                    UserTournament.winner_prompt_index == TournamentPrompt.position
+                )
             ).label('win_count')
-        ).outerjoin(
-            UserTournament, UserTournament.tournament_id == TournamentPrompt.tournament_id
+        ).select_from(TournamentPrompt).outerjoin(
+            UserTournament, 
+            UserTournament.tournament_id == TournamentPrompt.tournament_id
         ).filter(
             TournamentPrompt.tournament_id == tournament_id
         ).group_by(
-            TournamentPrompt.position, TournamentPrompt.text
+            TournamentPrompt.position, TournamentPrompt.text, TournamentPrompt.model
         ).order_by(TournamentPrompt.position).all()
         
-        # Calculate percentages from consistent data
+        # Calculate percentages
         formatted_results = []
         for result in results:
-            win_percentage = (result.win_count / result.total_participants * 100) if result.total_participants > 0 else 0.0
+            win_percentage = (result.win_count / result.completed_participants * 100) if result.completed_participants > 0 else 0.0
             formatted_results.append({
                 'prompt': result.text,
                 'prompt_index': result.position,
+                'model': result.model,
                 'win_count': result.win_count,
-                'total_participants': result.total_participants,
                 'win_percentage': round(win_percentage, 2)
             })
         
@@ -243,15 +219,15 @@ class TournamentService:
         return sorted(formatted_results, key=lambda x: (x['win_count'], x['win_percentage']), reverse=True)
 
     @staticmethod
-    def get_tournament_stats(tournament_id):
-        """Get general statistics for a tournament"""
+    def get_participation_stats(tournament_id):
+        """Get tournament participation statistics"""
         stats = db.session.query(
             func.count(UserTournament.id).label('total_participants'),
-            func.count(UserTournament.id).filter(UserTournament.completed == True).label('completed_participants')
+            func.sum(case((UserTournament.completed == True, 1), else_=0)).label('completed_participants')
         ).filter(UserTournament.tournament_id == tournament_id).first()
         
         total = stats.total_participants or 0
-        completed = stats.completed_participants or 0
+        completed = int(stats.completed_participants or 0)
         
         return {
             'total_participants': total,
@@ -269,17 +245,28 @@ class TournamentService:
             func.count(func.distinct(UserTournament.id)).label('total_participants'),
             func.count(func.distinct(case((UserTournament.completed == True, UserTournament.id)))).label('completed_participants'),
             func.count(func.distinct(TournamentPrompt.id)).label('num_prompts')
-        ).outerjoin(UserTournament).outerjoin(TournamentPrompt).group_by(
+        ).select_from(Tournament).outerjoin(
+            UserTournament, UserTournament.tournament_id == Tournament.id
+        ).outerjoin(
+            TournamentPrompt, TournamentPrompt.tournament_id == Tournament.id
+        ).group_by(
             Tournament.id, Tournament.question, Tournament.created_at
         ).order_by(Tournament.created_at.desc()).all()
         
-        return [{
-            'id': tournament.id,
-            'question': tournament.question[:100] + '...' if len(tournament.question) > 100 else tournament.question,
-            'num_prompts': tournament.num_prompts or 0,
-            'created_at': tournament.created_at.isoformat(),
-            'total_participants': tournament.total_participants or 0,
-            'completed_participants': tournament.completed_participants or 0,
-            'completion_rate': round((tournament.completed_participants / tournament.total_participants * 100), 2) 
-                             if tournament.total_participants > 0 else 0
-        } for tournament in results]
+        tournaments = []
+        for tournament in results:
+            total_participants = tournament.total_participants or 0
+            completed_participants = int(tournament.completed_participants or 0)
+            
+            tournaments.append({
+                'id': tournament.id,
+                'question': tournament.question[:100] + '...' if len(tournament.question) > 100 else tournament.question,
+                'num_prompts': tournament.num_prompts or 0,
+                'created_at': tournament.created_at.isoformat(),
+                'total_participants': total_participants,
+                'completed_participants': completed_participants,
+                'completion_rate': round((completed_participants / total_participants * 100), 2) 
+                                 if total_participants > 0 else 0
+            })
+        
+        return tournaments

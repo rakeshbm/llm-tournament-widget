@@ -1,62 +1,89 @@
-// TODO: Separate compponent and page level stylings
-
 import { Link } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 
 const colors = {
+  // Primary palette
   primary: '#2563eb',
   primaryHover: '#1d4ed8',
-  secondary: '#64748b',
+  primaryLight: '#3b82f6',
+
+  // Semantic colors
   success: '#10b981',
   successLight: '#d1fae5',
   successBackground: '#f0fdf4',
   successDark: '#15803d',
   successBorder: '#bbf7d0',
+
   warning: '#f59e0b',
   warningLight: '#fef3c7',
   warningBackground: '#fffbeb',
   warningDark: '#d97706',
   warningBorder: '#fed7aa',
+
   danger: '#ef4444',
   dangerHover: '#dc2626',
   dangerBackground: '#fef2f2',
   dangerBorder: '#fecaca',
+
+  // Neutral palette
+  gray50: '#f8fafc',
+  gray100: '#f1f5f9',
+  gray200: '#e2e8f0',
+  gray300: '#cbd5e1',
+  gray400: '#94a3b8',
+  gray500: '#64748b',
+  gray600: '#475569',
+  gray700: '#334155',
+  gray800: '#1e293b',
+  gray900: '#0f172a',
+
+  // Background colors
   background: '#f8fafc',
   backgroundSecondary: '#f1f5f9',
   backgroundTertiary: '#f9fafb',
   card: '#ffffff',
-  border: '#e2e8f0',
-  borderLight: '#f1f5f9',
-  borderSecondary: '#e5e7eb',
-  borderDashed: '#d1d5db',
-  borderFocus: '#3b82f6',
+
+  // Text colors
   textPrimary: '#0f172a',
   textSecondary: '#64748b',
   textMuted: '#94a3b8',
   textDark: '#374151',
   textLight: '#6b7280',
-  textBlack: '#000',
-  textDarker: '#666',
+
+  // Utility colors
   overlay: 'rgba(15, 23, 42, 0.6)',
-  actionBackground: '#f0f9ff',
-  actionBorder: '#bfdbfe',
+  disabled: '#e0e1e3',
+
+  // Medal colors
   gold: '#f59e0b',
   goldBackground: '#fef3c7',
   silver: '#6b7280',
   silverBackground: '#e5e7eb',
   bronze: '#ea580c',
   bronzeBackground: '#fed7aa',
-  disabled: '#e0e1e3ff',
 } as const;
 
+// Animations
 const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
 `;
 
 const slideIn = keyframes`
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
 `;
 
 const spin = keyframes`
@@ -64,7 +91,12 @@ const spin = keyframes`
   to { transform: rotate(360deg); }
 `;
 
-// Layout
+// Base styles
+const baseTransition = 'all 0.2s ease';
+const baseFont = `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif`;
+const monoFont = `'SF Mono', Monaco, Consolas, 'Courier New', monospace`;
+
+// Layout Components
 export const AppContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(
@@ -73,16 +105,35 @@ export const AppContainer = styled.div`
     ${colors.backgroundSecondary} 100%
   );
   padding: 24px;
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-family: ${baseFont};
 `;
 
 export const Container = styled.div`
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+`;
+
+export const PageContainer = styled.div`
+  padding: 24px;
   max-width: 1200px;
   margin: 0 auto;
 `;
 
-// Loading
+export const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+`;
+
+// Loading Components
 export const LoadingOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -105,7 +156,7 @@ export const LoadingContent = styled.div`
 export const LoadingSpinner = styled.div`
   width: 40px;
   height: 40px;
-  border: 3px solid ${colors.border};
+  border: 3px solid ${colors.gray200};
   border-top: 3px solid ${colors.primary};
   border-radius: 50%;
   animation: ${spin} 1s linear infinite;
@@ -115,8 +166,8 @@ export const LoadingSpinner = styled.div`
 export const LoadingText = styled.p`
   color: ${colors.textSecondary};
   font-size: 16px;
-  margin: 0;
   font-weight: 500;
+  margin: 0;
 `;
 
 // Typography
@@ -144,11 +195,9 @@ export const Subtitle = styled.p`
 export const Description = styled.p`
   font-size: 16px;
   color: ${colors.textMuted};
-  margin: 0;
   line-height: 1.5;
   max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
 `;
 
 export const SectionTitle = styled.h2`
@@ -159,7 +208,7 @@ export const SectionTitle = styled.h2`
   letter-spacing: -0.025em;
 `;
 
-// Forms
+// Form Components
 export const CreatorContainer = styled.div`
   background: ${colors.card};
   padding: 32px;
@@ -167,7 +216,9 @@ export const CreatorContainer = styled.div`
 `;
 
 export const FormGroup = styled.div`
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  margin: 24px 0;
 `;
 
 export const Label = styled.label`
@@ -182,19 +233,19 @@ export const Label = styled.label`
 export const TextArea = styled.textarea`
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid ${colors.border};
+  border: 2px solid ${colors.gray200};
   border-radius: 8px;
   font-size: 16px;
   font-family: inherit;
   resize: vertical;
-  transition: all 0.2s ease;
+  transition: ${baseTransition};
   background: ${colors.card};
   color: ${colors.textPrimary};
   line-height: 1.5;
 
   &:focus {
     outline: none;
-    border-color: ${colors.borderFocus};
+    border-color: ${colors.primaryLight};
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
@@ -216,7 +267,22 @@ export const ButtonRow = styled.div`
   justify-content: flex-end;
 `;
 
-// Buttons
+// Button Components
+const baseButton = `
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  transition: ${baseTransition};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+`;
+
 export const ButtonGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -225,80 +291,10 @@ export const ButtonGroup = styled.div`
   gap: 12px;
 `;
 
-export const PrimaryLinkButton = styled(Link)`
-  padding: 12px 24px;
-  background: ${colors.primary};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-  justify-content: center;
-
-  &:hover {
-    background: ${colors.primaryHover};
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-  }
-
-  &:disabled,
-  &[aria-disabled='true'] {
-    background: ${colors.textMuted};
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    pointer-events: none;
-  }
-`;
-
-export const SecondaryLinkButton = styled(Link)`
-  padding: 12px 24px;
-  background: ${colors.card};
-  color: ${colors.secondary};
-  border: 2px solid ${colors.border};
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-
-  &:hover:not([aria-disabled='true']) {
-    background: ${colors.background};
-    border-color: ${colors.secondary};
-    transform: translateY(-1px);
-    cursor: pointer;
-  }
-
-  &[aria-disabled='true'] {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-`;
-
 export const PrimaryButton = styled.button`
-  padding: 12px 24px;
+  ${baseButton}
   background: ${colors.primary};
   color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 
   &:hover:not(:disabled) {
     background: ${colors.primaryHover};
@@ -314,21 +310,62 @@ export const PrimaryButton = styled.button`
   }
 `;
 
-export const SecondaryButton = styled.button<{ disabled?: boolean }>`
-  padding: 12px 24px;
+export const SecondaryButton = styled.button`
+  ${baseButton}
   background: ${colors.card};
-  color: ${colors.secondary};
-  border: 2px solid ${colors.border};
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.2s ease;
+  color: ${colors.textSecondary};
+  border: 2px solid ${colors.gray200};
 
   &:hover:not(:disabled) {
     background: ${colors.background};
-    border-color: ${colors.secondary};
+    border-color: ${colors.textSecondary};
     transform: translateY(-1px);
-    cursor: pointer;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+export const PrimaryLinkButton = styled(Link)`
+  ${baseButton}
+  background: ${colors.primary};
+  color: white;
+  text-align: center;
+
+  &:hover {
+    background: ${colors.primaryHover};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
+
+  &[aria-disabled='true'] {
+    background: ${colors.textMuted};
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    pointer-events: none;
+  }
+`;
+
+export const SecondaryLinkButton = styled(Link)`
+  ${baseButton}
+  background: ${colors.card};
+  color: ${colors.textSecondary};
+  border: 2px solid ${colors.gray200};
+  text-align: center;
+
+  &:hover:not([aria-disabled='true']) {
+    background: ${colors.background};
+    border-color: ${colors.textSecondary};
+    transform: translateY(-1px);
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 `;
 
@@ -345,7 +382,7 @@ export const RemoveButton = styled.button<{ disabled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: ${baseTransition};
 
   &:hover:not(:disabled) {
     background: ${colors.dangerHover};
@@ -363,7 +400,7 @@ export const SmallButton = styled.button<{ viewOnly?: boolean }>`
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.2s ease;
+  transition: ${baseTransition};
 
   &:hover {
     transform: translateY(-1px);
@@ -371,6 +408,7 @@ export const SmallButton = styled.button<{ viewOnly?: boolean }>`
   }
 `;
 
+// Card Components
 export const TournamentCard = styled.div`
   background: ${colors.card};
   padding: 32px;
@@ -427,8 +465,9 @@ export const TournamentMeta = styled.div`
   }
 `;
 
+// Progress Components
 export const ProgressBar = styled.div`
-  background: ${colors.border};
+  background: ${colors.gray200};
   height: 8px;
   border-radius: 4px;
   overflow: hidden;
@@ -450,6 +489,11 @@ export const ProgressText = styled.p`
   font-weight: 500;
 `;
 
+export const ProgressContainer = styled.div`
+  margin: 20px 0;
+`;
+
+// Competition Components
 export const CompetitionContainer = styled.div`
   overflow-x: auto;
   overflow-y: visible;
@@ -463,14 +507,12 @@ export const CompetitionTree = styled.div`
   align-items: center;
   gap: 80px;
   min-width: fit-content;
-  position: relative;
 `;
 
 export const CompetitionRound = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-around;
-  position: relative;
 `;
 
 export const RoundLabel = styled.p`
@@ -483,30 +525,56 @@ export const RoundLabel = styled.p`
 `;
 
 export const CompetitionMatch = styled.div`
-  position: relative;
   margin: 15px 0;
   z-index: 2;
 `;
 
 export const MatchContainer = styled.div`
   background: ${colors.card};
-  border: 1px solid ${colors.border};
+  border: 1px solid ${colors.gray200};
   border-radius: 8px;
   width: 200px;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 `;
 
+export const MatchParticipant = styled.div<{
+  isWinner: boolean;
+  isBye?: boolean;
+  isUserChoice?: boolean;
+}>`
+  padding: 12px;
+  border-left: ${(props) => {
+    if (props.isUserChoice) return `4px solid ${colors.success}`;
+    if (props.isWinner) return `4px solid ${colors.primaryLight}`;
+    return '4px solid transparent';
+  }};
+  background: ${(props) => {
+    if (props.isBye) return colors.disabled;
+    if (props.isUserChoice) return colors.successBackground;
+    if (props.isWinner) return colors.backgroundSecondary;
+    return 'white';
+  }};
+  border-bottom: ${(props) =>
+    props.isBye ? 'none' : `1px solid ${colors.gray100}`};
+  transition: ${baseTransition};
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+// History Components
 export const HistoryCard = styled.div`
   background: ${colors.card};
-  border: 1px solid ${colors.border};
+  border: 1px solid ${colors.gray200};
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  transition: all 0.2s ease;
+  transition: ${baseTransition};
   animation: ${fadeIn} 0.3s ease-out;
 `;
 
@@ -562,7 +630,7 @@ export const HistoryChip = styled.span<{ variant?: 'success' | 'warning' }>`
         case 'warning':
           return colors.warning;
         default:
-          return colors.border;
+          return colors.gray200;
       }
     }};
 `;
@@ -573,7 +641,13 @@ export const HistoryActions = styled.div`
   gap: 12px;
 `;
 
-// Modal
+export const HistoryDate = styled.div`
+  color: ${colors.textLight};
+  font-size: 12px;
+  margin-top: 8px;
+`;
+
+// Modal Components
 export const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
@@ -599,9 +673,8 @@ export const ModalContent = styled.div`
 `;
 
 export const ModalHeader = styled.div`
-  position: relative;
   padding: 24px 32px;
-  border-bottom: 1px solid ${colors.border};
+  border-bottom: 1px solid ${colors.gray200};
   background: ${colors.background};
   border-radius: 16px 16px 0 0;
 `;
@@ -628,10 +701,11 @@ export const ModalClose = styled.button`
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: ${colors.textDarker};
+  color: ${colors.textDark};
+  transition: ${baseTransition};
 
   &:hover {
-    color: ${colors.textBlack};
+    color: ${colors.textPrimary};
   }
 `;
 
@@ -639,6 +713,7 @@ export const ModalBody = styled.div`
   padding: 32px;
 `;
 
+// Response Components
 export const ResponseGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -656,13 +731,12 @@ export const ResponseText = styled.div`
 `;
 
 export const ResponseCard = styled.div<{ disabled?: boolean }>`
-  border: 2px solid ${colors.border};
+  border: 2px solid ${colors.gray200};
   border-radius: 12px;
   padding: 16px;
   background: ${colors.card};
   cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
-  transition: all 0.2s ease;
-  position: relative;
+  transition: ${baseTransition};
   opacity: ${(props) => (props.disabled ? 0.6 : 1)};
 
   &:hover:not([disabled]) {
@@ -684,6 +758,7 @@ export const VoteCount = styled.div`
   font-weight: 500;
 `;
 
+// Status Components
 export const StatusMessage = styled.div<{
   type: 'success' | 'action' | 'waiting';
 }>`
@@ -693,20 +768,18 @@ export const StatusMessage = styled.div<{
   font-weight: 500;
   font-size: 15px;
   text-align: center;
-
   background: ${(props) => {
     switch (props.type) {
       case 'success':
         return colors.successBackground;
       case 'action':
-        return colors.actionBackground;
+        return colors.backgroundSecondary;
       case 'waiting':
         return colors.warningBackground;
       default:
         return colors.background;
     }
   }};
-
   color: ${(props) => {
     switch (props.type) {
       case 'success':
@@ -719,26 +792,31 @@ export const StatusMessage = styled.div<{
         return colors.textSecondary;
     }
   }};
-
   border: 1px solid
     ${(props) => {
       switch (props.type) {
         case 'success':
           return colors.successBorder;
         case 'action':
-          return colors.actionBorder;
+          return colors.gray300;
         case 'waiting':
           return colors.warningBorder;
         default:
-          return colors.border;
+          return colors.gray200;
       }
     }};
 `;
 
-export const ProgressContainer = styled.div`
-  margin: 20px 0;
+export const ErrorMessage = styled.div`
+  background: ${colors.dangerBackground};
+  border: 1px solid ${colors.dangerBorder};
+  color: ${colors.dangerHover};
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
 `;
 
+// Section Components
 export const BracketSection = styled.div`
   animation: ${fadeIn} 0.5s ease-out;
   background: ${colors.card};
@@ -780,26 +858,7 @@ export const StatValue = styled.span<{ winner?: boolean }>`
   font-size: 14px;
 `;
 
-export const PageContainer = styled.div`
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-export const PageHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 32px;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-`;
-
-// Tournament Grid
+// Grid and List Components
 export const TournamentGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
@@ -810,7 +869,6 @@ export const TournamentGrid = styled.div`
   }
 `;
 
-// Results Section
 export const ResultsSection = styled.div`
   background: ${colors.card};
   border-radius: 16px;
@@ -842,7 +900,7 @@ export const ResultItem = styled.div<{ rank: number }>`
       if (props.rank === 1) return colors.gold;
       if (props.rank === 2) return colors.silver;
       if (props.rank === 3) return colors.bronze;
-      return colors.borderSecondary;
+      return colors.gray300;
     }};
 `;
 
@@ -874,6 +932,7 @@ export const ResultStat = styled.div`
   font-size: 14px;
 `;
 
+// Empty State Components
 export const EmptyState = styled.div`
   text-align: center;
   padding: 64px 24px;
@@ -906,7 +965,7 @@ export const BracketPlaceholder = styled.div`
   font-size: 18px;
   background: ${colors.backgroundTertiary};
   border-radius: 8px;
-  border: 2px dashed ${colors.borderDashed};
+  border: 2px dashed ${colors.gray300};
 `;
 
 export const PromptText = styled.div`
@@ -916,43 +975,169 @@ export const PromptText = styled.div`
   font-size: 14px;
 `;
 
-export const ErrorMessage = styled.div`
-  background: ${colors.dangerBackground};
-  border: 1px solid ${colors.dangerBorder};
-  color: ${colors.dangerHover};
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 24px;
-`;
-
-export const HistoryDate = styled.div`
-  color: ${colors.textLight};
-  font-size: 12px;
-  margin-top: 8px;
-`;
-
-export const MatchParticipant = styled.div<{
-  isWinner: boolean;
-  isBye?: boolean;
-  isUserChoice?: boolean;
+// Selector Components
+export const SelectorContainer = styled.div<{
+  isOpen: boolean;
+  hasError?: boolean;
 }>`
-  padding: 12px;
-  border-left: ${(props) => {
-    if (props.isUserChoice) return `4px solid ${colors.success}`;
-    if (props.isWinner) return `4px solid ${colors.borderFocus}`;
-    return '4px solid transparent';
-  }};
-  background: ${(props) => {
-    if (props.isBye) return colors.disabled;
-    if (props.isUserChoice) return colors.successBackground;
-    if (props.isWinner) return colors.actionBackground;
-    return 'white';
-  }};
-  border-bottom: ${(props) =>
-    props.isBye ? 'none' : `1px solid ${colors.borderLight}`};
+  position: relative;
+  background: white;
+  border: 2px solid
+    ${(props) =>
+      props.hasError
+        ? colors.danger
+        : props.isOpen
+          ? colors.primaryLight
+          : colors.gray200};
+  border-radius: 12px;
+  transition: ${baseTransition};
+  box-shadow: ${(props) =>
+    props.isOpen
+      ? '0 4px 12px rgba(59, 130, 246, 0.15)'
+      : '0 1px 3px rgba(0, 0, 0, 0.1)'};
+
+  &:hover {
+    border-color: ${(props) =>
+      props.hasError ? colors.danger : colors.gray300};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+export const SelectedArea = styled.div`
+  padding: 12px 16px;
+  min-height: 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+`;
+
+export const ModelChip = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: ${colors.success};
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  transition: ${baseTransition};
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+  }
+`;
+
+export const RemoveChip = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  transition: ${baseTransition};
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+`;
+
+export const SearchInput = styled.input`
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: ${colors.textDark};
+  flex: 1;
+  min-width: 150px;
+  padding: 4px 0;
+
+  &::placeholder {
+    color: ${colors.textMuted};
+  }
+`;
+
+export const Dropdown = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid ${colors.gray200};
+  border-radius: 12px;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 1000;
+  overflow: hidden;
+  opacity: ${(props) => (props.isOpen ? 1 : 0)};
+  transform: ${(props) =>
+    props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.95)'};
   transition: all 0.2s ease;
+  display: ${(props) => (props.isOpen ? 'block' : 'none')};
+`;
+
+export const DropdownContent = styled.div`
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+`;
+
+export const ModelOption = styled.div<{
+  isSelected: boolean;
+  isHighlighted: boolean;
+}>`
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+  transition: all 0.15s ease;
+  background: ${(props) => {
+    if (props.isHighlighted) return colors.gray50;
+    if (props.isSelected) return colors.successLight;
+    return 'transparent';
+  }};
+  border: 2px solid
+    ${(props) => (props.isSelected ? colors.success : 'transparent')};
+
+  &:hover {
+    background: ${colors.gray50};
+    transform: translateX(4px);
+  }
 
   &:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
   }
+`;
+
+export const ModelInfo = styled.div`
+  flex: 1;
+`;
+
+export const ModelName = styled.div`
+  font-weight: 600;
+  color: ${colors.textPrimary};
+  font-size: 14px;
+  margin-bottom: 2px;
+`;
+
+export const ModelId = styled.div`
+  font-size: 12px;
+  color: ${colors.textLight};
+  font-family: ${monoFont};
+`;
+
+export const CheckIcon = styled.div`
+  color: ${colors.success};
+  font-size: 18px;
+  font-weight: bold;
 `;

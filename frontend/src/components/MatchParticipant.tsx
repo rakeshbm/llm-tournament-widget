@@ -4,6 +4,7 @@ import * as Styled from '../styles';
 interface MatchParticipantProps {
   prompt: string;
   response: string;
+  model: string;
   votes: number;
   totalVotes: number;
   isWinner: boolean;
@@ -15,6 +16,7 @@ export const MatchParticipant = memo<MatchParticipantProps>(
   ({
     prompt,
     response,
+    model,
     votes,
     totalVotes,
     isWinner,
@@ -32,7 +34,8 @@ export const MatchParticipant = memo<MatchParticipantProps>(
     return (
       <Styled.MatchParticipant isWinner={isWinner} isUserChoice={isUserChoice}>
         <Styled.ParticipantText>
-          <Styled.PromptText>{prompt}</Styled.PromptText>
+          <Styled.PromptText>Prompt: {prompt}</Styled.PromptText>
+          <Styled.PromptText>Model: {model}</Styled.PromptText>
           <Styled.ResponseText>{response}</Styled.ResponseText>
         </Styled.ParticipantText>
         {totalVotes > 0 && (

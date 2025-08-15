@@ -26,14 +26,17 @@ export const TournamentHeader = memo<TournamentHeaderProps>(
       return `🗳️ Continue voting to see the results! Progress: ${progressPercentage}%`;
     }, [tournament.user_state.completed, progressPercentage]);
 
-    const promptRankList = useMemo(
+    const promptList = useMemo(
       () =>
         tournament.prompts.map((prompt, index) => (
-          <p key={index}>
-            <em>"{prompt}"</em>
-          </p>
+          <ul>
+            <li key={index}>
+              <p>Prompt: {prompt}</p>
+              <p>Model: {tournament.models[index]}</p>
+            </li>
+          </ul>
         )),
-      [tournament.prompts]
+      [tournament.prompts, tournament.models]
     );
 
     return (
@@ -41,11 +44,11 @@ export const TournamentHeader = memo<TournamentHeaderProps>(
         <Styled.TournamentHeader>
           <Styled.TournamentInfo>
             <Styled.TournamentTitle>
-              Question: "{tournament.question}"
+              Question: {tournament.question}
             </Styled.TournamentTitle>
             <Styled.TournamentMeta>
-              {tournament.prompts.length} prompts:
-              {promptRankList}
+              Prompt-model combinations:
+              {promptList}
             </Styled.TournamentMeta>
 
             <Styled.ProgressContainer>

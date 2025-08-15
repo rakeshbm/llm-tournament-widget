@@ -11,13 +11,14 @@ interface TournamentBracketProps {
 export const TournamentBracket = memo<TournamentBracketProps>(
   ({ tournament }) => {
     const getPromptResponse = useCallback(
-      (index: number): { prompt: string; response: string } => {
+      (index: number): { prompt: string; response: string; model: string } => {
         return {
           prompt: tournament.prompts?.[index] ?? 'N/A',
           response: tournament.responses?.[index] ?? 'N/A',
+          model: tournament.models?.[index] ?? 'N/A',
         };
       },
-      [tournament.prompts, tournament.responses]
+      [tournament.prompts, tournament.responses, tournament.models]
     );
 
     // Show bracket if user has completed voting

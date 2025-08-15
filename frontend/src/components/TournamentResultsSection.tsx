@@ -25,20 +25,31 @@ export const TournamentResultsSection = memo<TournamentResultsSectionProps>(
               {results.stats.completed_participants}
             </Styled.StatValue>
           </Styled.StatItem>
+          <Styled.StatItem>
+            <Styled.StatLabel>Completion Rate:</Styled.StatLabel>
+            <Styled.StatValue>
+              {results.stats.completion_rate}%
+            </Styled.StatValue>
+          </Styled.StatItem>
         </Styled.TournamentStatsCard>
 
         <Styled.ResultsList>
-          {results.results.map((result, index) => (
-            <Styled.ResultItem key={result.prompt_index} rank={index + 1}>
+          {results.rankings.map((ranking, index) => (
+            <Styled.ResultItem key={ranking.prompt_index} rank={index + 1}>
               <Styled.ResultRank>#{index + 1}</Styled.ResultRank>
               <Styled.ResultContent>
-                <Styled.ResultPrompt>{result.prompt}</Styled.ResultPrompt>
+                <Styled.ResultPrompt>
+                  Prompt: {ranking.prompt}
+                </Styled.ResultPrompt>
+                <Styled.ResultPrompt>
+                  Model: {ranking.model}
+                </Styled.ResultPrompt>
                 <Styled.ResultStats>
                   <Styled.ResultStat>
-                    <strong>{result.win_count}</strong> wins
+                    <strong>{ranking.win_count}</strong> wins
                   </Styled.ResultStat>
                   <Styled.ResultStat>
-                    <strong>{result.win_percentage.toFixed(1)}%</strong> win
+                    <strong>{ranking.win_percentage.toFixed(1)}%</strong> win
                     rate
                   </Styled.ResultStat>
                 </Styled.ResultStats>

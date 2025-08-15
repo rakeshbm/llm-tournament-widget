@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { VoteRequest } from '../types';
-import { findNextVotableMatch, getMatchParticipants } from '../utils';
+import { findNextVotableMatch, getCurrentMatchFromState } from '../utils';
 import { useParams } from 'react-router-dom';
 import {
   TournamentResultsSection,
@@ -10,7 +10,7 @@ import {
   TournamentHeader,
   EmptyState,
 } from '../components';
-import { useTournament, useTournamentResults, useRecordVote } from '../hooks';
+import { useTournament, useRecordVote } from '../hooks';
 
 export const TournamentPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,37 +24,45 @@ export const TournamentPage = () => {
     isLoading,
     isError,
     refetch: refetchTournament,
-  } = useTournament(tournamentId);
-
-  const { data: results, refetch: refetchResults } = useTournamentResults(
-    tournamentId,
-    Boolean(tournament?.user_state?.completed)
-  );
+  } = useTournament(tournamentId, true);
 
   const { mutate: recordVote, isPending: isVoting } =
     useRecordVote(tournamentId);
 
   const currentMatch = useMemo(() => {
-    return tournament?.user_bracket
-      ? findNextVotableMatch(tournament.user_bracket)
-      : null;
-  }, [tournament?.user_bracket]);
+    if (!tournament) return null;
 
-  const currentMatchData = useMemo(() => {
-    if (!currentMatch || !tournament) return null;
-
-    return {
-      round: currentMatch.round,
-      match: currentMatch.match,
-      ...getMatchParticipants(
-        tournament.user_bracket[currentMatch.round][currentMatch.match],
+    if (tournament.user_state.next_match) {
+      const match = getCurrentMatchFromState(
+        tournament.user_state.next_match,
+        tournament.user_bracket,
         tournament.prompts,
-        tournament.responses
-      ),
-    };
-  }, [currentMatch, tournament]);
+        tournament.responses,
+        tournament.models
+      );
 
-  // Only open if user wants to vote
+      if (match) {
+        return match;
+      }
+    }
+
+    const nextVotableMatch = findNextVotableMatch(tournament.user_bracket);
+
+    if (nextVotableMatch) {
+      const match = getCurrentMatchFromState(
+        [nextVotableMatch.round, nextVotableMatch.match],
+        tournament.user_bracket,
+        tournament.prompts,
+        tournament.responses,
+        tournament.models
+      );
+
+      return match;
+    }
+
+    return null;
+  }, [tournament]);
+
   useEffect(() => {
     if (
       tournament?.user_state &&
@@ -75,18 +83,22 @@ export const TournamentPage = () => {
 
   const handleOpenVotingModal = useCallback(() => {
     if (
-      tournament?.user_state &&
-      !tournament.user_state.completed &&
-      currentMatch
+      !tournament?.user_state ||
+      tournament.user_state.completed ||
+      !currentMatch
     ) {
-      setUserWantsToVote(true);
-      setIsVotingModalOpen(true);
+      return;
     }
+
+    setUserWantsToVote(true);
+    setIsVotingModalOpen(true);
   }, [tournament, currentMatch]);
 
   const handleVote = useCallback(
     (winnerIndex: number) => {
-      if (!tournament || isVoting || !currentMatch) return;
+      if (!tournament || isVoting || !currentMatch) {
+        return;
+      }
 
       const voteRequest: VoteRequest = {
         round: currentMatch.round,
@@ -97,10 +109,6 @@ export const TournamentPage = () => {
       recordVote(voteRequest, {
         onSuccess: () => {
           refetchTournament();
-          // Only refetch results if user completed voting
-          if (tournament.user_state?.completed) {
-            refetchResults();
-          }
           setIsVotingModalOpen(false);
         },
         onError: (error) => {
@@ -109,14 +117,7 @@ export const TournamentPage = () => {
         },
       });
     },
-    [
-      tournament,
-      recordVote,
-      isVoting,
-      currentMatch,
-      refetchTournament,
-      refetchResults,
-    ]
+    [tournament, recordVote, isVoting, currentMatch, refetchTournament]
   );
 
   if (isLoading) {
@@ -139,23 +140,24 @@ export const TournamentPage = () => {
         onContinueVoting={handleOpenVotingModal}
       />
 
-      {tournament.user_state?.completed && results && (
-        <TournamentResultsSection results={results} />
-      )}
+      {tournament.user_state?.completed &&
+        tournament.rankings &&
+        tournament.stats && (
+          <TournamentResultsSection
+            results={{ rankings: tournament.rankings, stats: tournament.stats }}
+          />
+        )}
 
       <TournamentBracket tournament={tournament} />
 
-      {isVotingModalOpen &&
-        currentMatchData &&
-        currentMatchData.participant1 &&
-        currentMatchData.participant2 && (
-          <VotingModal
-            tournament={tournament}
-            currentMatchData={currentMatchData}
-            onVote={handleVote}
-            onClose={handleCloseVotingModal}
-          />
-        )}
+      {isVotingModalOpen && currentMatch && (
+        <VotingModal
+          tournament={tournament}
+          currentMatchData={currentMatch}
+          onVote={handleVote}
+          onClose={handleCloseVotingModal}
+        />
+      )}
 
       {isVoting && <Loader text="Recording your vote..." />}
     </>

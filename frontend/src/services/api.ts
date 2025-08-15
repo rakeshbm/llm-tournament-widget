@@ -1,78 +1,53 @@
 import {
+  Tournament,
   TournamentSummary,
   CreateTournamentRequest,
-  Tournament,
   VoteRequest,
   VoteResponse,
-  TournamentResults,
+  AvailableModels,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
 
-export const tournamentApi = {
-  fetchTournaments: async (): Promise<TournamentSummary[]> => {
-    const response = await fetch(`${API_BASE}/tournaments`, {
+class TournamentApi {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
       credentials: 'include',
+      ...options,
     });
-    if (!response.ok) {
-      throw new Error('Failed to fetch tournaments');
-    }
-    return response.json();
-  },
 
-  createTournament: async (
-    data: CreateTournamentRequest
-  ): Promise<Tournament> => {
-    const response = await fetch(`${API_BASE}/tournaments`, {
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  fetchAvailableModels = () =>
+    this.request<AvailableModels>('/tournaments/models');
+  fetchTournaments = () => this.request<TournamentSummary[]>('/tournaments');
+
+  createTournament = (request: CreateTournamentRequest) =>
+    this.request<Tournament>('/tournaments', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      credentials: 'include',
+      body: JSON.stringify(request),
     });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create tournament');
-    }
-    return response.json();
-  },
 
-  loadTournament: async (id: number): Promise<Tournament> => {
-    const response = await fetch(`${API_BASE}/tournaments/${id}`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to load tournament');
-    }
-    return response.json();
-  },
-
-  getTournamentResults: async (id: number): Promise<TournamentResults> => {
-    const response = await fetch(`${API_BASE}/tournaments/${id}/results`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to get tournament results');
-    }
-    return response.json();
-  },
-
-  recordVote: async (
-    tournamentId: number,
-    voteData: VoteRequest
-  ): Promise<VoteResponse> => {
-    const response = await fetch(
-      `${API_BASE}/tournaments/${tournamentId}/vote`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(voteData),
-        credentials: 'include',
-      }
+  loadTournament = (tournamentId: number, includeResults = false) =>
+    this.request<Tournament>(
+      `/tournaments/${tournamentId}${includeResults ? '?include_results=true' : ''}`
     );
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to record vote');
-    }
-    return response.json();
-  },
-};
+
+  recordVote = (tournamentId: number, voteRequest: VoteRequest) =>
+    this.request<VoteResponse>(`/tournaments/${tournamentId}/vote`, {
+      method: 'POST',
+      body: JSON.stringify(voteRequest),
+    });
+}
+
+export const tournamentApi = new TournamentApi();

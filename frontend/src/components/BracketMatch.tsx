@@ -1,61 +1,76 @@
 import { memo } from 'react';
 import * as Styled from '../styles';
-import { MatchParticipant } from './MatchParticipant';
 import { Match } from '../types';
+import { MatchParticipant } from './MatchParticipant';
 
 interface BracketMatchProps {
   match: Match;
-  getPromptResponse: (index: number) => { prompt: string; response: string };
+  getPromptResponse: (index: number) => {
+    prompt: string;
+    response: string;
+    model: string;
+  };
 }
 
 export const BracketMatch = memo<BracketMatchProps>(
   ({ match, getPromptResponse }) => {
+    const participant1Data =
+      match.participant1 !== null && match.participant1 !== -1
+        ? getPromptResponse(match.participant1)
+        : null;
+
+    const participant2Data =
+      match.participant2 !== null && match.participant2 !== -1
+        ? getPromptResponse(match.participant2)
+        : null;
+
+    const totalVotes =
+      (match.participant1_votes || 0) + (match.participant2_votes || 0);
+
     return (
       <Styled.CompetitionMatch>
         <Styled.MatchContainer>
-          {match.participant1 !== null && match.participant1 !== -1 ? (
+          {participant1Data ? (
             <MatchParticipant
-              prompt={getPromptResponse(match.participant1)['prompt']}
-              response={getPromptResponse(match.participant1)['response']}
+              prompt={participant1Data.prompt}
+              response={participant1Data.response}
+              model={participant1Data.model}
               votes={match.participant1_votes || 0}
-              totalVotes={match.total_votes || 0}
+              totalVotes={totalVotes}
               isWinner={match.winner === match.participant1}
-              isUserChoice={
-                match.winner === match.participant1 && match.winner !== null
-              }
+              isUserChoice={match.winner === match.participant1}
             />
           ) : (
             <MatchParticipant
               prompt=""
               response=""
+              model=""
               votes={0}
               totalVotes={0}
               isWinner={false}
-              isUserChoice={false}
-              isBye
+              isBye={true}
             />
           )}
 
-          {match.participant2 !== null && match.participant2 !== -1 ? (
+          {participant2Data ? (
             <MatchParticipant
-              prompt={getPromptResponse(match.participant2)['prompt']}
-              response={getPromptResponse(match.participant2)['response']}
+              prompt={participant2Data.prompt}
+              response={participant2Data.response}
+              model={participant2Data.model}
               votes={match.participant2_votes || 0}
-              totalVotes={match.total_votes || 0}
+              totalVotes={totalVotes}
               isWinner={match.winner === match.participant2}
-              isUserChoice={
-                match.winner === match.participant2 && match.winner !== null
-              }
+              isUserChoice={match.winner === match.participant2}
             />
           ) : (
             <MatchParticipant
               prompt=""
               response=""
+              model=""
               votes={0}
               totalVotes={0}
               isWinner={false}
-              isUserChoice={false}
-              isBye
+              isBye={true}
             />
           )}
         </Styled.MatchContainer>

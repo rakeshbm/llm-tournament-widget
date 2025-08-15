@@ -7,3 +7,4 @@ export { BracketMatch } from './BracketMatch';
 export { TournamentResultsSection } from './TournamentResultsSection';
 export { TournamentCard } from './TournamentCard';
 export { EmptyState } from './EmptyState';
+export { MultiModelSelector } from './MultiModelSelector';

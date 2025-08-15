@@ -9,14 +9,8 @@ export const useRecordVote = (tournamentId: number) => {
     mutationFn: (voteRequest) =>
       tournamentApi.recordVote(tournamentId, voteRequest),
     onSuccess: () => {
-      // Invalidate and refetch tournament data
+      // Invalidate tournament data to get fresh bracket state
       queryClient.invalidateQueries({ queryKey: ['tournament', tournamentId] });
-      queryClient.invalidateQueries({
-        queryKey: ['tournament-status', tournamentId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['tournament-results', tournamentId],
-      });
       queryClient.invalidateQueries({ queryKey: ['tournaments'] });
     },
   });

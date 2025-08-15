@@ -3,16 +3,18 @@ export interface Tournament {
   question: string;
   prompts: string[];
   responses: string[];
+  models: string[];
   bracket_template: Match[][];
   user_bracket: Match[][];
   user_state: UserTournamentState;
+  rankings?: PromptRankings[];
+  stats?: TournamentStats;
 }
 
 export interface UserTournamentState {
-  current_round: number;
-  current_match: number;
   completed: boolean;
   winner_prompt_index: number | null;
+  next_match: [number, number] | null;
 }
 
 export interface Match {
@@ -35,13 +37,14 @@ export interface TournamentSummary {
 }
 
 export interface TournamentResults {
-  results: PromptResult[];
+  rankings: PromptRankings[];
   stats: TournamentStats;
 }
 
-export interface PromptResult {
+export interface PromptRankings {
   prompt: string;
   prompt_index: number;
+  model: string;
   win_count: number;
   total_participants: number;
   win_percentage: number;
@@ -55,7 +58,7 @@ export interface TournamentStats {
 
 export interface CreateTournamentRequest {
   question: string;
-  prompts: string[];
+  prompts: PromptWithModel[];
 }
 
 export interface VoteRequest {
@@ -69,4 +72,27 @@ export interface VoteResponse {
   completed: boolean;
   winner_prompt_index: number | null;
   user_id: string;
+}
+
+export interface AvailableModels {
+  models: Record<string, string>;
+}
+
+export interface PromptWithModel {
+  text: string;
+  model: string;
+}
+
+export interface MatchParticipant {
+  index: number;
+  prompt: string;
+  response: string;
+  model: string;
+}
+
+export interface NextMatch {
+  round: number;
+  match: number;
+  participant1: MatchParticipant | null;
+  participant2: MatchParticipant | null;
 }

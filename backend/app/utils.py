@@ -1,40 +1,10 @@
 import math
 import random
+from typing import List, Dict
 
-from flask import current_app
-import requests
-
-LLM_MODEL = "mistralai/mistral-7b-instruct"
-
-def generate_llm_response(prompt, question):
-    try:
-        headers = {
-            "Authorization": f"Bearer {current_app.config["OPENROUTER_API_KEY"]}",
-            "Content-Type": "application/json",
-            "X-Title": "LLM Tournament Widget",
-        }
-
-        data = {
-            "model": LLM_MODEL,
-            "messages": [
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": question}
-            ],
-            "temperature": 0.7,
-            "max_tokens": 500
-        }
-
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-        response.raise_for_status()
-
-        return response.json()["choices"][0]["message"]["content"].strip()
-
-    except Exception as e:
-        print(f"Error generating response: {str(e)}")
-        return None
-
-def create_bracket(prompts):
-    num_prompts = len(prompts)
+def create_bracket(prompt_data_list: List[Dict[str, str]]) -> List[List[Dict]]:
+    """Create tournament bracket"""
+    num_prompts = len(prompt_data_list)
     if num_prompts < 2:
         raise ValueError("At least 2 prompts required")
 
@@ -47,7 +17,7 @@ def create_bracket(prompts):
     bye_positions = set()
     if byes_needed > 0:
         step = bracket_size // byes_needed
-        bye_positions = { (i * step) % bracket_size for i in range(byes_needed) }
+        bye_positions = {(i * step) % bracket_size for i in range(byes_needed)}
 
     # Build initial participants with byes
     participants = []
@@ -66,7 +36,9 @@ def create_bracket(prompts):
         round_matches = []
         
         for i in range(0, len(current_round), 2):
-            p1, p2 = current_round[i], current_round[i+1] if i+1 < len(current_round) else -1
+            p1 = current_round[i]
+            p2 = current_round[i + 1] if i + 1 < len(current_round) else -1
+            
             match = {
                 'participant1': p1,
                 'participant2': p2,

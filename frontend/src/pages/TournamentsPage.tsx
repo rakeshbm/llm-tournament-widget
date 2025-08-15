@@ -3,29 +3,19 @@ import { useTournaments } from '../hooks';
 import { EmptyState, Loader, TournamentCard } from '../components';
 
 export const TournamentsPage = () => {
-  const { data: tournaments, isLoading, error } = useTournaments();
+  const { data, isLoading, error } = useTournaments();
+  const tournaments = data?.tournaments ?? [];
 
   if (isLoading) {
     return <Loader text="Loading tournaments..." />;
   }
 
-  if (error) {
+  if (error || !Array.isArray(tournaments)) {
     return (
-      <Styled.PageContainer>
-        <Styled.Title>Tournaments</Styled.Title>
-        <Styled.ErrorMessage>
-          Failed to load tournaments: {error.message}
-        </Styled.ErrorMessage>
-      </Styled.PageContainer>
-    );
-  }
-
-  if (!tournaments) {
-    return (
-      <Styled.PageContainer>
-        <Styled.Title>Tournaments</Styled.Title>
-        <Styled.ErrorMessage>No tournament data available</Styled.ErrorMessage>
-      </Styled.PageContainer>
+      <EmptyState
+        title="Tournaments"
+        description="Failed to load tournaments"
+      />
     );
   }
 

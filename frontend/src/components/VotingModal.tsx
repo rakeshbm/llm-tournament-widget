@@ -1,16 +1,11 @@
 import { memo } from 'react';
 import * as Styled from '../styles';
-import { Tournament } from '../types';
+import { Tournament, NextMatch } from '../types';
 import { getRoundDisplayName } from '../utils';
 
 interface VotingModalProps {
   tournament: Tournament;
-  currentMatchData: {
-    round: number;
-    match: number;
-    participant1: { index: number; prompt: string; response: string } | null;
-    participant2: { index: number; prompt: string; response: string } | null;
-  };
+  currentMatchData: NextMatch;
   onVote: (index: number) => void;
   onClose: () => void;
 }

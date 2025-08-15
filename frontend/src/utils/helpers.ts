@@ -1,4 +1,4 @@
-import { Match } from '../types';
+import { Match, MatchParticipant, NextMatch } from '../types';
 
 export const calculateTournamentProgress = (
   userBracket: Match[][],
@@ -45,13 +45,16 @@ export const getRoundDisplayName = (
 export const findNextVotableMatch = (
   userBracket: Match[][]
 ): { round: number; match: number } | null => {
+  if (!userBracket || userBracket.length === 0) {
+    return null;
+  }
+
   for (let roundIndex = 0; roundIndex < userBracket.length; roundIndex++) {
     const round = userBracket[roundIndex];
 
     for (let matchIndex = 0; matchIndex < round.length; matchIndex++) {
       const match = round[matchIndex];
 
-      // Check if this match needs voting
       if (
         match.participant1 !== null &&
         match.participant1 !== -1 &&
@@ -64,18 +67,19 @@ export const findNextVotableMatch = (
     }
   }
 
-  return null; // No votable matches found
+  return null;
 };
 
 export const getMatchParticipants = (
   match: Match,
   prompts: string[],
-  responses: string[]
+  responses: string[],
+  models: string[]
 ): {
-  participant1: { index: number; prompt: string; response: string } | null;
-  participant2: { index: number; prompt: string; response: string } | null;
+  participant1: MatchParticipant | null;
+  participant2: MatchParticipant | null;
 } => {
-  const getParticipant = (index: number | null) => {
+  const getParticipant = (index: number | null): MatchParticipant | null => {
     if (index === null || index === -1 || index >= prompts.length) {
       return null;
     }
@@ -83,11 +87,42 @@ export const getMatchParticipants = (
       index,
       prompt: prompts[index] || 'N/A',
       response: responses[index] || 'N/A',
+      model: models[index] || 'N/A',
     };
   };
 
   return {
     participant1: getParticipant(match.participant1),
     participant2: getParticipant(match.participant2),
+  };
+};
+
+export const getCurrentMatchFromState = (
+  nextMatch: [number, number] | null,
+  userBracket: Match[][],
+  prompts: string[],
+  responses: string[],
+  models: string[]
+): NextMatch | null => {
+  if (!nextMatch) return null;
+
+  const [round, match] = nextMatch;
+  if (round >= userBracket.length || match >= userBracket[round].length) {
+    return null;
+  }
+
+  const matchData = userBracket[round][match];
+  const participants = getMatchParticipants(
+    matchData,
+    prompts,
+    responses,
+    models
+  );
+
+  return {
+    round,
+    match,
+    participant1: participants.participant1,
+    participant2: participants.participant2,
   };
 };

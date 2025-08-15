@@ -3,7 +3,7 @@ import * as Styled from '../styles';
 
 export interface EmptyStateProps {
   icon?: ReactNode;
-  title: string;
+  title?: string;
   description: ReactNode;
 }
 

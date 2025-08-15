@@ -1,10 +1,10 @@
 # LLM Tournament Widget
 
-A web application that helps you discover the most effective prompts through head-to-head competition. Test multiple prompt variations against the same question and let voting determine the winner in a tournament-style bracket.
+A web application that helps you discover the most effective prompts and models through head-to-head competition. Test multiple prompt-model variations against the same question and let voting determine the winner in a tournament-style bracket.
 
 ## Features
 
-- **Tournament Creation**: Set up competitions with 2-8 different prompts
+- **Tournament Creation**: Set up competitions with 2-16 different prompt-model combinations
 - **Bracket System**: Automatic tournament bracket generation with proper bye handling
 - **Head-to-Head Voting**: Compare prompt responses side-by-side
 - **Tournament History**: View and continue past tournaments
@@ -84,7 +84,8 @@ docker-compose down
 
 1. **Create a Tournament**:
    - Enter a question that all prompts should answer
-   - Add 2-8 different prompt variations
+   - Select upto 4 LLM models
+   - Add upto 4 different prompt variations
    - Click "Submit"
 
 2. **Vote on Matches**:
@@ -94,7 +95,7 @@ docker-compose down
 
 3. **View Results**:
    - See the tournament bracket progression
-   - View the winning prompt and completion status
+   - View the winning prompt-model combination and completion status
    - Access tournament history for past competitions
 
 ## API Endpoints
@@ -104,15 +105,17 @@ docker-compose down
 - `GET /tournaments` - List all tournaments
 - `GET /tournaments/{id}` - Get specific tournament with user state
 - `POST /tournaments/{id}/vote` - Submit vote for match
-- `GET /tournaments/{id}/results` - Get aggregated tournament results
+- `GET /models` - Get available LLM models
 
 ### Project Structure
 ```
 ├── backend/
 │   ├── app/
+|   |   |__ clients/           # Client providers
 |   |   |__ core/              # Core setup
 │   │   ├── models.py          # Database models
 │   │   ├── routes/            # API routes
+|   |   |__ schemas.py         # Pydantic models
 │   │   ├── services/          # Business logic
 │   │   └── utils.py           # Utility functions
 |   |   |__ config.py          # App config            
@@ -124,21 +127,11 @@ docker-compose down
 │   │   ├── components/        # React components
 │   │   ├── hooks/             # Custom hooks
 │   │   ├── types/             # TypeScript types
+|   |   |__ services/          # APIs
 │   │   └── styles/            # Styled components
 │   ├── package.json
 │   └── Dockerfile
 └── docker-compose.yml
-```
-
-## Configuration
-
-
-### LLM Model
-
-The application uses `mistralai/mistral-7b-instruct` by default. You can modify the model in `backend/app/utils.py`:
-
-```python
-LLM_MODEL = "mistralai/mistral-7b-instruct"  # Change this line
 ```
 
 ## Running Tests
